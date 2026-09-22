@@ -1,0 +1,49 @@
+{
+  "name": "kannada-katha-kosha-api",
+  "version": "1.0.0",
+  "description": "Backend API for Kannada Katha Kosha - Archival Content Management System & Digital Repository for Kannada Literature",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/database/migrate.js",
+    "migrate:rollback": "node src/database/rollback.js",
+    "seed:admin": "node seeds/create-admin.js",
+    "seed:sample": "node seeds/sample-data.js",
+    "test": "node --test test/**/*.test.js"
+  },
+  "keywords": [
+    "kannada",
+    "katha-kosha",
+    "literature",
+    "express",
+    "mysql",
+    "knex",
+    "api"
+  ],
+  "author": "Kannada Sahitya Parishat & Katha Kosha Editorial Board",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.12.0",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "pino-pretty": "^13.0.0"
+  }
+}

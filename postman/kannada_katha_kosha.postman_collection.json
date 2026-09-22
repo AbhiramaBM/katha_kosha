@@ -1,0 +1,538 @@
+{
+  "info": {
+    "name": "Kannada Katha Kosha API (v1.0)",
+    "description": "Complete Postman collection for Kannada Katha Kosha backend repository API covering all endpoints, authentication flows, roles, file uploads, and error scenarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Check System Health & DB",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('accessToken', res.data.accessToken);",
+                  "    pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Invalid Credentials (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"WrongPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token Rotation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('accessToken', res.data.accessToken);",
+                  "    pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin@12345\",\n  \"newPassword\": \"Admin@123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (Admin Only)",
+      "item": [
+        {
+          "name": "Create Editor User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('editorId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ರಾಘವೇಂದ್ರ (Raghavendra Editor)\",\n  \"email\": \"editor1@example.com\",\n  \"password\": \"Editor@12345\",\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "List Users (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ರಾಘವೇಂದ್ರ ರಾವ್ (Raghavendra Rao)\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{editorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{editorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Admin Reset User Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NewEditor@12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{editorId}}/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{editorId}}", "reset-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authors",
+      "item": [
+        {
+          "name": "Create Author",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('authorId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name_kn\": \"ಶಿವರಾಮ ಕಾರಂತ\",\n  \"name_en\": \"Kota Shivaram Karanth\",\n  \"bio\": \"ಜ್ಞಾನಪೀಠ ಪ್ರಶಸ್ತಿ ಪುರಸ್ಕೃತ ಕನ್ನಡದ ಶ್ರೇಷ್ಠ ಕಾದಂಬರಿಕಾರ, ನಾಟಕಕಾರ, ಯಕ್ಷಗಾನ ಸಂಶೋಧಕ ಹಾಗೂ ಪರಿಸರ ಹೋರಾಟಗಾರ.\",\n  \"birth_year\": 1902,\n  \"death_year\": 1997,\n  \"place\": \"ಕೋಟ, ಉಡುಪಿ (Kota, Udupi)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors"]
+            }
+          }
+        },
+        {
+          "name": "List Authors (Filter & Search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors?q=ಕುವೆಂಪು&page=1&limit=20&sort=name_kn",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors"],
+              "query": [
+                { "key": "q", "value": "ಕುವೆಂಪು" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "name_kn" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Author Detail + Story Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors/{{authorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors", "{{authorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Author",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"ಕನ್ನಡ ಸಾಹಿತ್ಯ ಲೋಕದ ನಡೆದಾಡುವ ವಿಶ್ವಕೋಶವೆಂದೇ ಖ್ಯಾತರಾಗಿದ್ದ ಡಾ. ಕೋಟ ಶಿವರಾಮ ಕಾರಂತರು.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors/{{authorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors", "{{authorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Upload Author Photo (Multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors/{{authorId}}/photo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors", "{{authorId}}", "photo"]
+            }
+          }
+        },
+        {
+          "name": "Get Stories of Author",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors/{{authorId}}/stories?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors", "{{authorId}}", "stories"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Author with Active Stories (409 Conflict)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/authors/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "authors", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stories",
+      "item": [
+        {
+          "name": "Create Story (Text Content + References)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('storyId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"author_id\": {{authorId}},\n  \"title_kn\": \"ಮೂಕಜ್ಜಿಯ ಕನಸುಗಳು\",\n  \"title_en\": \"Mookajjiya Kanasugalu (Dreams of Mookajji)\",\n  \"genre\": \"ಕಾದಂಬರಿ (Novel)\",\n  \"published_year\": 1968,\n  \"summary\": \"ಶಿವರಾಮ ಕಾರಂತರ ಜ್ಞಾನಪೀಠ ಪ್ರಶಸ್ತಿ ವಿಜೇತ ಕಾದಂಬರಿ. ಮೂಕಜ್ಜಿಯ ಅತೀಂದ್ರಿಯ ದರ್ಶನಗಳು ಮತ್ತು ಮಾನವ ಸಂಸ್ಕೃತಿಯ ವಿಕಾಸದ ಕಥನ.\",\n  \"content_type\": \"text\",\n  \"content_text\": \"ಮೂಕಜ್ಜಿಯು ಮೌನವಾಗಿದ್ದರೂ ಆಕೆಯ ಕಣ್ಣುಗಳಲ್ಲಿ ಸಾವಿರಾರು ವರುಷಗಳ ಮಾನವ ಇತಿಹಾಸ, ನಂಬಿಕೆಗಳು ಹಾಗೂ ಸಂಸ್ಕೃತಿಯ ಹರಿವು ನಿರಂತರವಾಗಿ ಹೊಳೆಯುತ್ತಿತ್ತು...\",\n  \"status\": \"published\",\n  \"references\": [\n    {\n      \"name\": \"ಜ್ಞಾನಪೀಠ ಪ್ರಶಸ್ತಿ ವಿವರ\",\n      \"url\": \"https://jnanpith.net/award-recipients/karanth\"\n    },\n    {\n      \"name\": \"ಕನ್ನಡ ಸಾಹಿತ್ಯ ಅಧ್ಯಯನ ಲೇಖನ\",\n      \"url\": \"https://kannadauniversity.org/mookajji-critique\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories"]
+            }
+          }
+        },
+        {
+          "name": "List Stories (Filter & Search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories?q=ಕರ್ವಾಲೋ&status=published&page=1&limit=20&sort=published_year",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories"],
+              "query": [
+                { "key": "q", "value": "ಕರ್ವಾಲೋ" },
+                { "key": "status", "value": "published" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "published_year" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Story Detail with Author & References",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories/{{storyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories", "{{storyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Story & Replace References",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"ಪರಿಷ್ಕೃತ ಸಾರಾಂಶ: ಮೂಕಜ್ಜಿಯ ಕನಸುಗಳು - ಭಾರತೀಯ ತತ್ತ್ವಶಾಸ್ತ್ರದ ವಿಶಿಷ್ಟ ಒಳನೋಟ.\",\n  \"references\": [\n    {\n      \"name\": \"ಪರಿಷ್ಕೃತ ವಿಮರ್ಶೆ - ಪ್ರಜಾವಾಣಿ\",\n      \"url\": \"https://prajavani.net/literature/mookajji-revisit\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories/{{storyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories", "{{storyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Replace Story PDF (Multipart)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "pdf",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories/{{storyId}}/pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories", "{{storyId}}", "pdf"]
+            }
+          }
+        },
+        {
+          "name": "Delete Story (Soft Delete - Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stories/{{storyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stories", "{{storyId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
