@@ -13,11 +13,9 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { storiesApi } from '../api/storiesApi';
-import { authorsApi } from '../api/authorsApi';
-import { useToast } from '../hooks/useToast';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
+import { storiesApi, authorsApi } from '../api';
+import { useToast } from '../hooks';
+import { Button, Input } from '../components/common';
 
 export default function StoryEditor() {
   const { id } = useParams();

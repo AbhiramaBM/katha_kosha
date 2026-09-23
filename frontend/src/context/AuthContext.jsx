@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { authApi } from '../api/authApi';
-import { useToast } from '../hooks/useToast';
+import { authApi } from '../api';
+import { useToast } from '../hooks';
 
 export const AuthContext = createContext(null);
 

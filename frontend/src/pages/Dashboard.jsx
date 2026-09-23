@@ -12,9 +12,8 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { storiesApi } from '../api/storiesApi';
-import { authorsApi } from '../api/authorsApi';
-import { useAuth } from '../hooks/useAuth';
+import { storiesApi, authorsApi } from '../api';
+import { useAuth } from '../hooks';
 import { StoryReaderModal } from '../components/stories/StoryReaderModal';
 
 export default function Dashboard() {

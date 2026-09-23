@@ -13,12 +13,9 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { authorsApi } from '../api/authorsApi';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/useToast';
-import { Modal } from '../components/common/Modal';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
+import { authorsApi } from '../api';
+import { useAuth, useToast } from '../hooks';
+import { Modal, Button, Input } from '../components/common';
 
 export default function AuthorsList() {
   const { isAdmin } = useAuth();

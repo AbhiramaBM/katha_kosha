@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowRight, AlertCircle, BookOpen, Key, Sparkles } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { Mail, ArrowRight, AlertCircle, BookOpen, Key, Sparkles, Moon, Sun } from 'lucide-react';
+import { useAuth, useTheme } from '../hooks';
 import { VALIDATION_RULES } from '../utils/validation';
-import { Input } from '../components/common/Input';
-import { PasswordInput } from '../components/auth/PasswordInput';
-import { Button } from '../components/common/Button';
-import { useTheme } from '../hooks/useTheme';
-import { Moon, Sun } from 'lucide-react';
+import { Input, PasswordInput, Button } from '../components/common';
 
 export default function Login() {
   const { login } = useAuth();

@@ -14,8 +14,7 @@ import {
   PlusCircle, 
   UserCheck 
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../hooks/useTheme';
+import { useAuth, useTheme } from '../../hooks';
 
 export function AppLayout({ children }) {
   const { currentUser, logout, isAdmin } = useAuth();

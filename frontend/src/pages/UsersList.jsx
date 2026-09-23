@@ -9,13 +9,9 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { usersApi } from '../api/usersApi';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/useToast';
-import { Modal } from '../components/common/Modal';
-import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
-import { PasswordInput } from '../components/auth/PasswordInput';
+import { usersApi } from '../api';
+import { useAuth, useToast } from '../hooks';
+import { Modal, Button, Input, PasswordInput } from '../components/common';
 
 export default function UsersList() {
   const { isAdmin } = useAuth();

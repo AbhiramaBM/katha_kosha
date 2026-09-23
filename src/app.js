@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import pinoHttp from 'pino-http';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger.js';
@@ -57,8 +58,14 @@ const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
 app.use('/uploads', express.static(uploadDir));
 
 // Static file serving for frontend
+const distDir = path.resolve('./frontend/dist');
 const publicDir = path.resolve('./public');
-app.use(express.static(publicDir));
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+}
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
 
 // Health check endpoint (Section 11)
 app.get('/health', async (req, res) => {
@@ -80,7 +87,15 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path === '/health') {
     return next();
   }
-  return res.sendFile(path.join(publicDir, 'index.html'));
+  const distIndex = path.join(distDir, 'index.html');
+  if (fs.existsSync(distIndex)) {
+    return res.sendFile(distIndex);
+  }
+  const publicIndex = path.join(publicDir, 'index.html');
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
+  return res.status(200).send('Kannada Katha Kosha API Server is running.');
 });
 
 // Catch 404 for undefined routes
