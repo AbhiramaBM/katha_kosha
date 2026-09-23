@@ -56,6 +56,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
 app.use('/uploads', express.static(uploadDir));
 
+// Static file serving for frontend
+const publicDir = path.resolve('./public');
+app.use(express.static(publicDir));
+
 // Health check endpoint (Section 11)
 app.get('/health', async (req, res) => {
   const isDbOk = await testConnection();
@@ -70,6 +74,14 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/authors', authorsRoutes);
 app.use('/api/v1/stories', storiesRoutes);
+
+// SPA fallback for HTML requests (excluding /api, /uploads, /health)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path === '/health') {
+    return next();
+  }
+  return res.sendFile(path.join(publicDir, 'index.html'));
+});
 
 // Catch 404 for undefined routes
 app.use((req, res) => {

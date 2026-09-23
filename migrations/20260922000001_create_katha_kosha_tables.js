@@ -16,7 +16,7 @@ export async function up(knex) {
     table.datetime('updated_at').notNullable().defaultTo(knex.fn.now());
   });
 
-  // 2. refresh_tokens table
+
   await knex.schema.createTable('refresh_tokens', (table) => {
     table.bigIncrements('id').primary();
     table.bigInteger('user_id').unsigned().notNullable()

@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "frontend": "npm run dev --prefix frontend",
+    "frontend:build": "npm run build --prefix frontend",
     "migrate": "node src/database/migrate.js",
     "migrate:rollback": "node src/database/rollback.js",
     "seed:admin": "node seeds/create-admin.js",
