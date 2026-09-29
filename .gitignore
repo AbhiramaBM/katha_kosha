@@ -8,3 +8,5 @@ dist/
 coverage/
 .sqlite
 *.db
+test/screenshots/
+test/recordings/

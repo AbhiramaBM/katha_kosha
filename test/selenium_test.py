@@ -111,11 +111,15 @@ def run_tests():
         # Step 3: Test Valid Admin Login
         total += 1
         print("\n[Step 3] Submitting Valid Admin Credentials...")
-        email_el.clear()
-        email_el.send_keys(ADMIN_EMAIL)
-        pwd_el.clear()
-        pwd_el.send_keys(ADMIN_PASSWORD)
-        submit_btn.click()
+        email_el_val = driver.find_element(By.ID, "email")
+        pwd_el_val = driver.find_element(By.ID, "password")
+        submit_btn_val = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+
+        email_el_val.send_keys(Keys.CONTROL, 'a', Keys.BACK_SPACE)
+        email_el_val.send_keys(ADMIN_EMAIL)
+        pwd_el_val.send_keys(Keys.CONTROL, 'a', Keys.BACK_SPACE)
+        pwd_el_val.send_keys(ADMIN_PASSWORD)
+        submit_btn_val.click()
 
         wait.until(EC.url_contains("/dashboard"))
         token = driver.execute_script("return localStorage.getItem('auth_token');")
@@ -143,11 +147,11 @@ def run_tests():
         add_btn.click()
         time.sleep(0.5)
 
-        kn_input = driver.find_element(By.XPATH, "//input[@placeholder='ಉದಾ: ಕುವೆಂಪು' or contains(@placeholder, 'ಕುವೆಂಪು')]")
+        kn_input = wait.until(EC.presence_of_element_located((By.ID, "author-name-kn")))
         test_kn_name = f"ಪರೀಕ್ಷಾ ಸಾಹಿತಿ (Py-{int(time.time()) % 10000})"
         kn_input.send_keys(test_kn_name)
 
-        save_btn = driver.find_element(By.XPATH, "//button[@type='submit' and (contains(., 'ಉಳಿಸಿ') or contains(., 'Save'))]")
+        save_btn = driver.find_element(By.XPATH, "//button[@type='submit' and (contains(., 'ಉಳಿಸಿ') or contains(., 'Save') or contains(., 'ಸಾಹಿತಿ ಸೇರಿಸಿ'))]")
         save_btn.click()
         time.sleep(1.0)
         print(f"  ✓ PASS: Kannada Unicode author modal submitted ({test_kn_name}).")
@@ -166,7 +170,7 @@ def run_tests():
         print("\n[Step 7] Checking Story Editor Page...")
         driver.get(f"{FRONTEND_URL}/stories/new")
         wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'ಹೊಸ ಕಥೆ') or contains(text(), 'New Story')]")))
-        title_kn = driver.find_element(By.XPATH, "//input[@placeholder='ಉದಾ: ಕಾನೂರು ಹೆಗ್ಗಡಿತಿ' or contains(@placeholder, 'ಕಾನೂರು')]")
+        title_kn = driver.find_element(By.XPATH, "//input[@placeholder='ಉದಾ: ಕರ್ವಾಲೋ, ಮಲೆಗಳಲ್ಲಿ ಮದುಮಗಳು, ಸಂಸ್ಕಾರ...' or contains(@placeholder, 'ಕರ್ವಾಲೋ')]")
         title_kn.send_keys("ಪೈಥಾನ್ ಸೆಲೆನಿಯಮ್ ಪರೀಕ್ಷಾರ್ಥ ಕಥೆ")
         print("  ✓ PASS: Story Editor input fields functional.")
         passed += 1
@@ -182,12 +186,8 @@ def run_tests():
         # Step 9: Logout & Protected Guard
         total += 1
         print("\n[Step 9] Testing Logout and Route Guards...")
-        logout_btn = driver.find_element(By.XPATH, "//button[contains(., 'ನಿರ್ಗಮಿಸಿ') or contains(., 'Logout')]")
+        logout_btn = driver.find_element(By.XPATH, "//button[contains(., 'ಲಾಗೌಟ್') or contains(., 'Sign Out') or contains(., 'Logout')]")
         logout_btn.click()
-        time.sleep(0.5)
-        confirm_btn = driver.find_elements(By.XPATH, "//button[contains(., 'ಹೌದು, ನಿರ್ಗಮಿಸಿ') or (contains(., 'Logout') and @type='button')]")
-        if confirm_btn:
-            confirm_btn[-1].click()
 
         wait.until(EC.url_contains("/login"))
         driver.get(f"{FRONTEND_URL}/dashboard")
