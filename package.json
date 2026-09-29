@@ -13,7 +13,9 @@
     "migrate:rollback": "node src/database/rollback.js",
     "seed:admin": "node seeds/create-admin.js",
     "seed:sample": "node seeds/sample-data.js",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test test/**/*.test.js",
+    "test:selenium": "node test/selenium.e2e.js",
+    "test:selenium:headed": "node test/selenium.e2e.js --headed"
   },
   "keywords": [
     "kannada",
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "pino-pretty": "^13.0.0"
+    "pino-pretty": "^13.0.0",
+    "selenium-webdriver": "^4.49.0"
   }
 }

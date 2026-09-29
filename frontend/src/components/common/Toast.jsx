@@ -16,7 +16,7 @@ const TOAST_BORDER = {
   info: 'border-blue-200 dark:border-blue-800/40'
 };
 
-function ToastItem({ toast, onDismiss }) {
+export function ToastItem({ toast, onDismiss }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onDismiss(toast.id);
@@ -61,3 +61,6 @@ export function ToastContainer({ toasts, onDismiss }) {
     </div>
   );
 }
+
+export { ToastItem as Toast };
+

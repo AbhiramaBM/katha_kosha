@@ -7,7 +7,7 @@
 ## 1. Scope
 
 | In scope (v1) | Out of scope (later) |
-|---|---|
+|---|---| 
 | Login for Admin & Editor (JWT + refresh token) | Frontend / admin panel UI |
 | Admin manages Editor accounts | Public reader website / app |
 | Author CRUD | Multiple authors per story |
