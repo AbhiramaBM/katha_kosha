@@ -72,8 +72,11 @@ export function StoryReaderModal({ story, isOpen, onClose }) {
         {/* Content Body */}
         {story.content_type === 'pdf' ? (
           <div className="p-8 rounded-2xl bg-stone-50 dark:bg-slate-800/40 border border-stone-200 dark:border-slate-700 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center mb-4">
               <FileText className="w-8 h-8" />
+            </div>
+            <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300">
+              {story.pdf_url ? (story.pdf_url.split('.').pop() || 'PDF').toUpperCase() : 'BOOK'}
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
               {t('pdfDocumentTitle')}
@@ -87,10 +90,15 @@ export function StoryReaderModal({ story, isOpen, onClose }) {
                 href={story.pdf_url}
                 target="_blank"
                 rel="noreferrer"
+                download
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-md transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span>{t('openPdfBtn')}</span>
+                <span>
+                  {lang === 'kn'
+                    ? `${(story.pdf_url.split('.').pop() || 'PDF').toUpperCase()} ಪುಸ್ತಕ ವೀಕ್ಷಿಸಿ / ಡೌನ್‌ಲೋಡ್`
+                    : `View / Download ${(story.pdf_url.split('.').pop() || 'PDF').toUpperCase()} Book`}
+                </span>
               </a>
             ) : (
               <span className="text-xs text-amber-600 font-medium">{t('noPdfAttached')}</span>

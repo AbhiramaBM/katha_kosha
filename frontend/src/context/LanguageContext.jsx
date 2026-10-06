@@ -131,9 +131,9 @@ export const translations = {
     summaryLabel: 'ಸಂಕ್ಷಿಪ್ತ ಸಾರಾಂಶ',
     contentTypeLabel: 'ಕೃತಿಯ ರೂಪ',
     optDigitalText: '📝 ಡಿಜಿಟಲ್ ಪಠ್ಯ (Text)',
-    optArchivalPdf: '📄 PDF / ಹಸ್ತಪ್ರತಿ ದಾಖಲೆ',
+    optArchivalPdf: '📄 ಪುಸ್ತಕ ಕಡತ (Book File - PDF, DOCX, EPUB, TXT)',
     fullTextLabel: 'ಕಥೆಯ ಪೂರ್ಣ ಪಠ್ಯ',
-    selectPdfLabel: 'ಪಿಡಿಎಫ್ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ',
+    selectPdfLabel: 'ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ (PDF, DOCX, EPUB, TXT)',
     publicationStatusLabel: 'ಪ್ರಕಟಣೆ ಸ್ಥಿತಿ',
     optPublishedPublic: 'ಪ್ರಕಟಿತ (ಸಾರ್ವಜನಿಕವಾಗಿ ಲಭ್ಯ)',
     optDraftPrivate: 'ಕರಡು (ಅಂತಿಮವಾಗಿಲ್ಲ)',
@@ -142,10 +142,10 @@ export const translations = {
     // Reader Modal
     storyReaderTitle: 'ಕಥಾ ವಾಚನ',
     authorPrefix: 'ಸಾಹಿತಿ: ',
-    pdfDocumentTitle: 'ಪಿಡಿಎಫ್ / ಹಸ್ತಪ್ರತಿ ದಾಖಲೆ',
-    pdfDocumentDesc: 'ಈ ಕೃತಿಯು ಮೂಲ ಹಸ್ತಪ್ರತಿಯ ಡಿಜಿಟಲ್ PDF ರೂಪದಲ್ಲಿದೆ. ವೀಕ್ಷಿಸಲು ಅಥವಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.',
-    openPdfBtn: 'PDF ವೀಕ್ಷಿಸಿ / ಡೌನ್‌ಲೋಡ್',
-    noPdfAttached: 'ಪಿಡಿಎಫ್ ಫೈಲ್ ಇನ್ನೂ ಲಗತ್ತಿಸಿಲ್ಲ',
+    pdfDocumentTitle: 'ಪುಸ್ತಕ / ಹಸ್ತಪ್ರತಿ ದಾಖಲೆ',
+    pdfDocumentDesc: 'ಈ ಕೃತಿಯು ಡಿಜಿಟಲ್ ಪುಸ್ತಕ ದಾಖಲೆ ರೂಪದಲ್ಲಿದೆ (PDF, DOCX, EPUB, TXT). ವೀಕ್ಷಿಸಲು ಅಥವಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.',
+    openPdfBtn: 'ಪುಸ್ತಕ ವೀಕ್ಷಿಸಿ / ಡೌನ್‌ಲೋಡ್',
+    noPdfAttached: 'ಪುಸ್ತಕ ಫೈಲ್ ಇನ್ನೂ ಲಗತ್ತಿಸಿಲ್ಲ',
 
     // Users List
     usersTitle: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ',
@@ -293,9 +293,9 @@ export const translations = {
     summaryLabel: 'Brief Summary',
     contentTypeLabel: 'Content Format',
     optDigitalText: '📝 Digital Text',
-    optArchivalPdf: '📄 PDF / Manuscript File',
+    optArchivalPdf: '📄 Book File (PDF, DOCX, EPUB, TXT)',
     fullTextLabel: 'Story Full Text',
-    selectPdfLabel: 'Select PDF File',
+    selectPdfLabel: 'Select Book File (PDF, DOCX, EPUB, TXT)',
     publicationStatusLabel: 'Publication Status',
     optPublishedPublic: 'Published (Publicly Visible)',
     optDraftPrivate: 'Draft (Private)',
@@ -304,10 +304,10 @@ export const translations = {
     // Reader Modal
     storyReaderTitle: 'Story Reader',
     authorPrefix: 'Author: ',
-    pdfDocumentTitle: 'Archival PDF Manuscript',
-    pdfDocumentDesc: 'This work is preserved as an archival PDF manuscript. Click below to view or download.',
-    openPdfBtn: 'View / Download PDF',
-    noPdfAttached: 'No PDF file attached yet',
+    pdfDocumentTitle: 'Book / Manuscript Document',
+    pdfDocumentDesc: 'This work is preserved as a digital book document (PDF, DOCX, EPUB, TXT). Click below to view or download.',
+    openPdfBtn: 'View / Download Book',
+    noPdfAttached: 'No book file attached yet',
 
     // Users List
     usersTitle: 'User Management',

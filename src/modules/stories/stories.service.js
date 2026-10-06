@@ -1,3 +1,4 @@
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../config/database.js';
 import { storage } from '../../storage/index.js';
@@ -28,12 +29,13 @@ export async function createStory(storyData, file, userId) {
     contentText = storyData.content_text;
   } else if (storyData.content_type === 'pdf') {
     if (!file || !file.buffer) {
-      throw new AppError('VALIDATION_ERROR', 'A PDF file is required when content_type is pdf', 400);
+      throw new AppError('VALIDATION_ERROR', 'A book file (PDF, DOCX, EPUB, TXT) is required when content_type is pdf', 400);
     }
 
+    const mime = file.mimetype || 'application/pdf';
     // Magic bytes check
-    if (!validateMagicBytes(file.buffer, 'application/pdf')) {
-      throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid PDF (magic bytes check failed)', 415);
+    if (!validateMagicBytes(file.buffer, mime, file.originalname)) {
+      throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid standard book file (magic bytes check failed)', 415);
     }
   }
 
@@ -55,14 +57,15 @@ export async function createStory(storyData, file, userId) {
     updated_by: userId
   });
 
-  // 4. If PDF, upload with key stories/<id>/<uuid>.pdf
+  // 4. If book file, upload with key stories/<id>/<uuid>.<ext>
   if (storyData.content_type === 'pdf' && file) {
-    const filename = `${uuidv4()}.pdf`;
+    const ext = path.extname(file.originalname || '').toLowerCase() || '.pdf';
+    const filename = `${uuidv4()}${ext}`;
     const key = `stories/${storyId}/${filename}`;
     const { url } = await storage.save({
       key,
       buffer: file.buffer,
-      mimeType: 'application/pdf'
+      mimeType: file.mimetype || 'application/pdf'
     });
 
     pdfUrl = url;
@@ -276,31 +279,33 @@ export async function updateStory(storyId, updateData, file, userId) {
     }
   } else if (targetContentType === 'pdf') {
     updatePayload.content_type = 'pdf';
-    updatePayload.content_text = null; // Clear text when PDF
+    updatePayload.content_text = null; // Clear text when book file
 
-    // If new file provided, replace PDF
+    // If new file provided, replace book file
     if (file && file.buffer) {
-      if (!validateMagicBytes(file.buffer, 'application/pdf')) {
-        throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid PDF (magic bytes check failed)', 415);
+      const mime = file.mimetype || 'application/pdf';
+      if (!validateMagicBytes(file.buffer, mime, file.originalname)) {
+        throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid standard book file (magic bytes check failed)', 415);
       }
 
       if (existing.pdf_key) {
         await storage.delete({ key: existing.pdf_key });
       }
 
-      const filename = `${uuidv4()}.pdf`;
+      const ext = path.extname(file.originalname || '').toLowerCase() || '.pdf';
+      const filename = `${uuidv4()}${ext}`;
       const key = `stories/${storyId}/${filename}`;
       const { url } = await storage.save({
         key,
         buffer: file.buffer,
-        mimeType: 'application/pdf'
+        mimeType: file.mimetype || 'application/pdf'
       });
 
       updatePayload.pdf_url = url;
       updatePayload.pdf_key = key;
     } else if (existing.content_type === 'text') {
       // Switching from text to pdf without a file
-      throw new AppError('VALIDATION_ERROR', 'PDF file is required when switching to pdf content_type', 400);
+      throw new AppError('VALIDATION_ERROR', 'A standard book file is required when switching to book document format', 400);
     }
   }
 
@@ -335,24 +340,26 @@ export async function replaceStoryPdf(storyId, file, userId) {
   }
 
   if (!file || !file.buffer) {
-    throw new AppError('VALIDATION_ERROR', 'PDF file is required', 400);
+    throw new AppError('VALIDATION_ERROR', 'A book file is required', 400);
   }
 
-  if (!validateMagicBytes(file.buffer, 'application/pdf')) {
-    throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid PDF (magic bytes check failed)', 415);
+  const mime = file.mimetype || 'application/pdf';
+  if (!validateMagicBytes(file.buffer, mime, file.originalname)) {
+    throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Uploaded file is not a valid standard book file (magic bytes check failed)', 415);
   }
 
-  // Remove old PDF if exists
+  // Remove old file if exists
   if (story.pdf_key) {
     await storage.delete({ key: story.pdf_key });
   }
 
-  const filename = `${uuidv4()}.pdf`;
+  const ext = path.extname(file.originalname || '').toLowerCase() || '.pdf';
+  const filename = `${uuidv4()}${ext}`;
   const key = `stories/${storyId}/${filename}`;
   const { url } = await storage.save({
     key,
     buffer: file.buffer,
-    mimeType: 'application/pdf'
+    mimeType: file.mimetype || 'application/pdf'
   });
 
   await db('stories').where({ id: storyId }).update({

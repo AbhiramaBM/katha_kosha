@@ -14,7 +14,7 @@ import {
 import { AppLayout } from '../components/layout/AppLayout';
 import { authorsApi, storiesApi } from '../api';
 import { useAuth, useToast, useLanguage } from '../hooks';
-import { Modal, Button, Input, KannadaInput } from '../components/common';
+import { Modal, Button, Input } from '../components/common';
 
 export default function AuthorsList() {
   const { isAdmin, isReader, canEdit } = useAuth();
@@ -316,12 +316,12 @@ export default function AuthorsList() {
             </div>
           )}
 
-          <KannadaInput
+          <Input
             label={t('nameKnLabel')}
             id="nameKn"
             value={nameKn}
-            onChange={setNameKn}
-            placeholder={lang === 'kn' ? 'ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, kuvempu -> ಕುವೆಂಪು)...' : 'Type in English to get Kannada (e.g. kuvempu -> ಕುವೆಂಪು)...'}
+            onChange={(e) => setNameKn(e.target.value)}
+            placeholder={lang === 'kn' ? 'ಸಾಹಿತಿಯ ಹೆಸರನ್ನು ನಮೂದಿಸಿ...' : 'Enter author name in Kannada...'}
             required
           />
 
@@ -352,23 +352,27 @@ export default function AuthorsList() {
             />
           </div>
 
-          <KannadaInput
+          <Input
             label={t('placeLabel')}
             id="place"
             value={place}
-            onChange={setPlace}
-            placeholder={lang === 'kn' ? 'ಉದಾ: kuppalli, shivamogga -> ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ...' : 'e.g. kuppalli, shivamogga...'}
+            onChange={(e) => setPlace(e.target.value)}
+            placeholder={lang === 'kn' ? 'ಉದಾ: ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ' : 'e.g. Kuppalli, Shivamogga'}
           />
 
-          <KannadaInput
-            label={t('bioLabel')}
-            id="bio"
-            value={bio}
-            onChange={setBio}
-            multiline
-            rows={3}
-            placeholder={lang === 'kn' ? 'ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯಿಕ ಕೊಡುಗೆ ಮತ್ತು ಕಿರು ಪರಿಚಯ...' : 'Author contribution and biography...'}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="bio" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {t('bioLabel')}
+            </label>
+            <textarea
+              id="bio"
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder={lang === 'kn' ? 'ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯಿಕ ಕೊಡುಗೆ ಮತ್ತು ಕಿರು ಪರಿಚಯ...' : 'Author contribution and biography...'}
+              className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-stone-100 dark:border-slate-800">
             <Button

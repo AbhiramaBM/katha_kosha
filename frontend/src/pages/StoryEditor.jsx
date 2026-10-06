@@ -8,12 +8,14 @@ import {
   Plus, 
   Trash2, 
   ExternalLink, 
-  AlertCircle 
+  AlertCircle,
+  FileCheck
 } from 'lucide-react';
+import mammoth from 'mammoth';
 import { AppLayout } from '../components/layout/AppLayout';
 import { storiesApi, authorsApi } from '../api';
 import { useToast, useLanguage } from '../hooks';
-import { Button, Input, KannadaInput } from '../components/common';
+import { Button, Input } from '../components/common';
 
 export default function StoryEditor() {
   const { id } = useParams();
@@ -39,6 +41,10 @@ export default function StoryEditor() {
   const [status, setStatus] = useState('published');
   const [pdfFile, setPdfFile] = useState(null);
   const [existingPdfUrl, setExistingPdfUrl] = useState('');
+
+  // File import and upload helpers
+  const [importingFile, setImportingFile] = useState(false);
+  const [fileError, setFileError] = useState('');
 
   // Reference links
   const [references, setReferences] = useState([]);
@@ -98,6 +104,89 @@ export default function StoryEditor() {
     setReferences(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Import story text from DOCX, TXT, MD
+  const handleImportTextFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    // Strictly reject images
+    if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(file.name)) {
+      toast.error(lang === 'kn' ? 'ಚಿತ್ರಗಳನ್ನು ಅನುಮತಿಸಲಾಗುವುದಿಲ್ಲ! DOCX ಅಥವಾ TXT ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ.' : 'Images are not allowed! Please select a DOCX or TXT file.');
+      return;
+    }
+
+    setImportingFile(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      let extractedText = '';
+
+      if (ext === 'docx') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        extractedText = result.value || '';
+      } else if (ext === 'txt' || ext === 'md') {
+        extractedText = await file.text();
+      } else {
+        toast.error(lang === 'kn' ? 'ಕೇವಲ .docx, .txt ಕಡತಗಳನ್ನು ಆಮದು ಮಾಡಿಕೊಳ್ಳಬಹುದು' : 'Only .docx or .txt files can be imported');
+        setImportingFile(false);
+        return;
+      }
+
+      if (!extractedText.trim()) {
+        toast.error(lang === 'kn' ? 'ಆಯ್ಕೆಮಾಡಿದ ಫೈಲ್‌ನಲ್ಲಿ ಯಾವುದೇ ಪಠ್ಯ ಕಂಡುಬಂದಿಲ್ಲ' : 'No text content found in selected file');
+        setImportingFile(false);
+        return;
+      }
+
+      setContentText(extractedText);
+      if (!titleKn.trim()) {
+        const cleanName = file.name.replace(/\.[^/.]+$/, '');
+        setTitleKn(cleanName);
+      }
+      toast.success(lang === 'kn' ? 'ಕಥೆಯ ಪಠ್ಯವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಆಮದು ಮಾಡಿಕೊಳ್ಳಲಾಗಿದೆ!' : 'Story text imported successfully!');
+    } catch (err) {
+      console.error('Import error:', err);
+      toast.error(lang === 'kn' ? 'ಫೈಲ್‌ನಿಂದ ಪಠ್ಯ ಆಮದು ಮಾಡಲು ವಿಫಲವಾಗಿದೆ' : 'Failed to extract text from file');
+    } finally {
+      setImportingFile(false);
+    }
+  };
+
+  // Handle standard book document selection (single upload only, no images)
+  const handleBookFileSelect = (e) => {
+    setFileError('');
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (files.length > 1) {
+      setFileError(lang === 'kn' ? 'ಒಂದೇ ಒಂದು ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಮಾತ್ರ ಅನುಮತಿಸಲಾಗಿದೆ' : 'Only a single file upload is allowed');
+      return;
+    }
+
+    const file = files[0];
+    // Reject image files strictly
+    if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(file.name)) {
+      setFileError(lang === 'kn' ? 'ಚಿತ್ರಗಳನ್ನು (JPG, PNG) ಅನುಮತಿಸಲಾಗುವುದಿಲ್ಲ! ಕೇವಲ ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ಫೈಲ್‌ಗಳನ್ನು (PDF, DOCX, EPUB, TXT) ಮಾತ್ರ ಲಗತ್ತಿಸಿ.' : 'Images (JPG, PNG) are not allowed! Only standard book formats (PDF, DOCX, EPUB, TXT) are permitted.');
+      e.target.value = '';
+      return;
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const allowed = ['pdf', 'docx', 'doc', 'epub', 'txt'];
+    if (!allowed.includes(ext)) {
+      setFileError(lang === 'kn' ? 'ಕೇವಲ ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ಫೈಲ್‌ಗಳನ್ನು (PDF, DOCX, DOC, EPUB, TXT) ಮಾತ್ರ ಅನುಮತಿಸಲಾಗಿದೆ' : 'Only standard book files (PDF, DOCX, DOC, EPUB, TXT) are allowed');
+      e.target.value = '';
+      return;
+    }
+
+    setPdfFile(file);
+    if (!titleKn.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '');
+      setTitleKn(cleanName);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -115,7 +204,7 @@ export default function StoryEditor() {
       return;
     }
     if (contentType === 'pdf' && !pdfFile && !existingPdfUrl) {
-      setErrorMsg('ದಯವಿಟ್ಟು PDF ಫೈಲ್ ಲಗತ್ತಿಸಿ (Please upload a PDF file)');
+      setErrorMsg('ದಯವಿಟ್ಟು ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ಫೈಲ್ ಲಗತ್ತಿಸಿ (Please upload a book file)');
       return;
     }
 
@@ -134,6 +223,7 @@ export default function StoryEditor() {
       if (contentType === 'text') {
         formData.append('content_text', contentText.trim());
       } else if (pdfFile) {
+        formData.append('file', pdfFile);
         formData.append('pdf', pdfFile);
       }
 
@@ -222,13 +312,13 @@ export default function StoryEditor() {
                 {lang === 'kn' ? 'ಮೂಲ ವಿವರಗಳು (Story Details)' : 'Story Details'}
               </h2>
 
-              {/* Title Kannada */}
-              <KannadaInput
+              {/* Title Kannada - Standard clean typing */}
+              <Input
                 label={t('titleKnLabel')}
                 id="titleKn"
                 value={titleKn}
-                onChange={setTitleKn}
-                placeholder={lang === 'kn' ? 'ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, karvalo -> ಕರ್ವಾಲೋ)...' : 'Type English to get Kannada (e.g. karvalo -> ಕರ್ವಾಲೋ)...'}
+                onChange={(e) => setTitleKn(e.target.value)}
+                placeholder={lang === 'kn' ? 'ಕಥೆಯ ಶೀರ್ಷಿಕೆಯನ್ನು ನಮೂದಿಸಿ...' : 'Enter story title in Kannada...'}
                 required
               />
 
@@ -247,18 +337,22 @@ export default function StoryEditor() {
               </div>
 
               {/* Summary */}
-              <KannadaInput
-                label={t('summaryLabel')}
-                id="summary"
-                value={summary}
-                onChange={setSummary}
-                multiline
-                rows={2}
-                placeholder={lang === 'kn' ? 'ಕಥೆಯ ಒಂದು ಸಾಲಿನ ಅಥವಾ ಕಿರು ಸಾರಾಂಶ...' : 'Short one-line summary...'}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="summary" className="font-kannada text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {t('summaryLabel')}
+                </label>
+                <textarea
+                  id="summary"
+                  rows={2}
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  placeholder={lang === 'kn' ? 'ಕಥೆಯ ಒಂದು ಸಾಲಿನ ಅಥವಾ ಕಿರು ಸಾರಾಂಶ...' : 'Short one-line summary...'}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
             </div>
 
-            {/* Content Section: Text or PDF */}
+            {/* Content Section: Text or Standard Book File */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between pb-2 border-b border-stone-100 dark:border-slate-800">
                 <h2 className="font-kannada font-bold text-sm text-slate-900 dark:text-white">
@@ -293,37 +387,103 @@ export default function StoryEditor() {
               </div>
 
               {contentType === 'text' ? (
-                <KannadaInput
-                  label={t('fullTextLabel')}
-                  id="contentText"
-                  value={contentText}
-                  onChange={setContentText}
-                  multiline
-                  rows={12}
-                  placeholder={lang === 'kn' ? 'ಇಲ್ಲಿ ಕಥೆಯ ಪಠ್ಯವನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ) ಅಥವಾ ಪೇಸ್ಟ್ ಮಾಡಿ...' : 'Type or paste the story text here...'}
-                />
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="contentText" className="font-kannada text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {t('fullTextLabel')} <span className="text-rose-500">*</span>
+                    </label>
+
+                    {/* Import from Book file (.docx, .txt) */}
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-semibold cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors shadow-2xs">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>
+                        {importingFile
+                          ? (lang === 'kn' ? 'ಆಮದು ಮಾಡಲಾಗುತ್ತಿದೆ...' : 'Importing...')
+                          : (lang === 'kn' ? 'ಪುಸ್ತಕ ಕಡತದಿಂದ ಆಮದು (.docx, .txt)' : 'Import from Book (.docx, .txt)')}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".docx,.txt,.md"
+                        multiple={false}
+                        disabled={importingFile}
+                        onChange={handleImportTextFile}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  <textarea
+                    id="contentText"
+                    rows={13}
+                    value={contentText}
+                    onChange={(e) => setContentText(e.target.value)}
+                    placeholder={lang === 'kn' ? 'ಇಲ್ಲಿ ಕಥೆಯ ಪೂರ್ಣ ಪಠ್ಯವನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಅಂಟಿಸಿ...' : 'Type or paste the story full text here...'}
+                    className="w-full p-4 rounded-xl text-sm font-kannada leading-relaxed bg-stone-50 dark:bg-slate-800/80 border border-stone-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
               ) : (
                 <div className="p-6 border-2 border-dashed border-stone-200 dark:border-slate-700 rounded-xl text-center">
                   <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <p className="font-kannada text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {lang === 'kn' ? 'PDF ಹಸ್ತಪ್ರತಿ ಅಥವಾ ದಾಖಲೆಯನ್ನು ಲಗತ್ತಿಸಿ' : 'Attach archival PDF manuscript'}
+                    {lang === 'kn' ? 'ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ದಾಖಲೆಯನ್ನು ಲಗತ್ತಿಸಿ (ಏಕ ಕಡತ ಮಾತ್ರ)' : 'Attach Standard Book Document (Single File Only)'}
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-1 mb-4">
-                    {lang === 'kn' ? 'ಗರಿಷ್ಠ 50MB PDF ಫೈಲ್' : 'Max 50MB PDF file'}
+                  <p className="text-[11px] text-slate-400 mt-1 mb-2">
+                    {lang === 'kn' ? 'ಅನುಮತಿಸಲಾದ ರೂಪಗಳು: PDF, DOCX, DOC, EPUB, TXT (ಗರಿಷ್ಠ 50MB)' : 'Allowed formats: PDF, DOCX, DOC, EPUB, TXT (Max 50MB)'}
                   </p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium mb-4">
+                    {lang === 'kn' ? '⚠️ ಗಮನಿಸಿ: ಚಿತ್ರಗಳನ್ನು (JPG, PNG) ಅನುಮತಿಸಲಾಗುವುದಿಲ್ಲ. ಪ್ರಮಾಣಿತ ಪುಸ್ತಕ ಫೈಲ್‌ಗಳು ಮಾತ್ರ.' : '⚠️ Note: No JPG/PNG images allowed. Only standard book documents.'}
+                  </p>
+
+                  {fileError && (
+                    <div className="mb-3 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{fileError}</span>
+                    </div>
+                  )}
 
                   <input
                     type="file"
-                    accept="application/pdf"
-                    onChange={(e) => setPdfFile(e.target.files[0] || null)}
-                    className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                    id="bookFileInput"
+                    accept=".pdf,.docx,.doc,.epub,.txt"
+                    multiple={false}
+                    onChange={handleBookFileSelect}
+                    className="hidden"
                   />
 
+                  <label
+                    htmlFor="bookFileInput"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 dark:bg-primary-950/50 hover:bg-primary-100 dark:hover:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-semibold cursor-pointer border border-primary-200 dark:border-primary-800 transition-colors"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>{pdfFile ? (lang === 'kn' ? 'ಬೇರೆ ಕಡತ ಆಯ್ಕೆಮಾಡಿ' : 'Change Selected File') : (lang === 'kn' ? 'ಪುಸ್ತಕ ಕಡತ ಆಯ್ಕೆಮಾಡಿ' : 'Select Book File')}</span>
+                  </label>
+
+                  {pdfFile && (
+                    <div className="mt-4 p-3 rounded-xl bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 flex items-center justify-between text-left max-w-md mx-auto">
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <FileCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div className="truncate">
+                          <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">{pdfFile.name}</p>
+                          <p className="text-[10px] text-slate-400">{(pdfFile.size / (1024 * 1024)).toFixed(2)} MB • {pdfFile.name.split('.').pop()?.toUpperCase()}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPdfFile(null)}
+                        className="p-1 rounded text-slate-400 hover:text-rose-500"
+                        title="ತೆಗೆದುಹಾಕಿ (Remove)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
                   {existingPdfUrl && !pdfFile && (
-                    <div className="mt-3 text-xs text-slate-500">
-                      {lang === 'kn' ? 'ಈಗಾಗಲೇ ಇರುವ PDF: ' : 'Existing PDF: '}
-                      <a href={existingPdfUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">
-                        {lang === 'kn' ? 'ತೆರೆಯಿರಿ' : 'Open'}
+                    <div className="mt-3 text-xs text-slate-500 flex items-center justify-center gap-1.5">
+                      <span>{lang === 'kn' ? 'ಈಗಾಗಲೇ ಲಭ್ಯವಿರುವ ಕಡತ: ' : 'Existing Document: '}</span>
+                      <a href={existingPdfUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline font-semibold flex items-center gap-1">
+                        <span>{lang === 'kn' ? 'ವೀಕ್ಷಿಸಿ / ಡೌನ್‌ಲೋಡ್' : 'View / Download'}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   )}

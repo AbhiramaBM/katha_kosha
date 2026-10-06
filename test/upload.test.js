@@ -115,4 +115,77 @@ test('Uploads 3. Valid PDF story upload succeeds with %PDF magic bytes', async (
   assert.equal(json.success, true);
   assert.equal(json.data.content_type, 'pdf');
   assert.ok(json.data.pdf_url);
+  assert.ok(json.data.pdf_url.endsWith('.pdf'));
 });
+
+test('Uploads 4. Valid DOCX book upload succeeds with ZIP PK magic bytes', async () => {
+  // Valid ZIP header for DOCX: PK\x03\x04
+  const validDocx = Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+  const formData = new FormData();
+  formData.append('author_id', String(authorId));
+  formData.append('title_kn', 'ಡಾಕ್ಸ್ ಕಥಾ ಪುಸ್ತಕ');
+  formData.append('content_type', 'pdf');
+  formData.append('file', new Blob([validDocx], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'novel.docx');
+
+  const res = await fetch(`${baseUrl}/stories`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminAccessToken}`
+    },
+    body: formData
+  });
+
+  assert.equal(res.status, 201);
+  const json = await res.json();
+  assert.equal(json.success, true);
+  assert.ok(json.data.pdf_url);
+  assert.ok(json.data.pdf_url.endsWith('.docx'));
+});
+
+test('Uploads 5. Image (JPEG) uploaded as story file is strictly rejected (415)', async () => {
+  const validJpeg = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
+
+  const formData = new FormData();
+  formData.append('author_id', String(authorId));
+  formData.append('title_kn', 'ಚಿತ್ರ ಕಥೆಯಲ್ಲ');
+  formData.append('content_type', 'pdf');
+  formData.append('file', new Blob([validJpeg], { type: 'image/jpeg' }), 'picture.jpg');
+
+  const res = await fetch(`${baseUrl}/stories`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminAccessToken}`
+    },
+    body: formData
+  });
+
+  assert.equal(res.status, 415);
+  const json = await res.json();
+  assert.equal(json.error.code, 'UNSUPPORTED_MEDIA_TYPE');
+});
+
+test('Uploads 6. Multiple files uploaded to story is rejected (single file only)', async () => {
+  const validPdf1 = Buffer.from('%PDF-1.4\n%EOF');
+  const validPdf2 = Buffer.from('%PDF-1.4\n%EOF');
+
+  const formData = new FormData();
+  formData.append('author_id', String(authorId));
+  formData.append('title_kn', 'ಎರಡು ಕಡತಗಳು');
+  formData.append('content_type', 'pdf');
+  formData.append('file', new Blob([validPdf1], { type: 'application/pdf' }), 'one.pdf');
+  formData.append('pdf', new Blob([validPdf2], { type: 'application/pdf' }), 'two.pdf');
+
+  const res = await fetch(`${baseUrl}/stories`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminAccessToken}`
+    },
+    body: formData
+  });
+
+  assert.equal(res.status, 400);
+  const json = await res.json();
+  assert.equal(json.error.code, 'VALIDATION_ERROR');
+});
+

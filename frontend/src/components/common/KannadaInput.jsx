@@ -22,16 +22,8 @@ export function KannadaInput({
 
   const handleInputChange = (e) => {
     const rawVal = e.target.value;
-    if (isKannada) {
-      // Real-time phonetic transliteration
-      const converted = transliterateKannada(rawVal);
-      if (onChange) {
-        onChange(converted);
-      }
-    } else {
-      if (onChange) {
-        onChange(rawVal);
-      }
+    if (onChange) {
+      onChange(rawVal);
     }
   };
 

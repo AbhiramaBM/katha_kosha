@@ -1,3 +1,4 @@
+import path from 'path';
 import multer from 'multer';
 import { AppError } from '../utils/response.js';
 
@@ -19,16 +20,56 @@ export const uploadAuthorPhoto = multer({
   }
 }).single('photo');
 
-// Story PDF uploader: max 20MB, application/pdf
-export const uploadStoryPdf = multer({
+// Standard book formats allowed (single file upload only):
+// PDF, DOCX, DOC, EPUB, TXT. Strictly no images (JPG/PNG).
+const ALLOWED_BOOK_MIMES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/epub+zip',
+  'text/plain'
+];
+
+const ALLOWED_BOOK_EXTENSIONS = ['.pdf', '.docx', '.doc', '.epub', '.txt'];
+
+const bookMulter = multer({
   storage,
   limits: {
-    fileSize: 20 * 1024 * 1024 // 20 MB
+    fileSize: 50 * 1024 * 1024 // 50 MB
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype !== 'application/pdf') {
-      return cb(new AppError('UNSUPPORTED_MEDIA_TYPE', 'Only PDF files are allowed', 415));
+    // Explicitly reject images and non-standard book formats
+    if (file.mimetype.startsWith('image/')) {
+      return cb(new AppError('UNSUPPORTED_MEDIA_TYPE', 'Image files (JPG, PNG, etc.) are not allowed. Only standard book formats (PDF, DOCX, DOC, EPUB, TXT) are permitted.', 415));
     }
+
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const isMimeAllowed = ALLOWED_BOOK_MIMES.includes(file.mimetype);
+    const isExtAllowed = ALLOWED_BOOK_EXTENSIONS.includes(ext);
+
+    if (!isMimeAllowed && !isExtAllowed) {
+      return cb(new AppError('UNSUPPORTED_MEDIA_TYPE', 'Only standard book formats (PDF, DOCX, DOC, EPUB, TXT) are allowed. Images and other file types are not permitted.', 415));
+    }
+
     cb(null, true);
   }
-}).single('pdf');
+}).fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'pdf', maxCount: 1 }
+]);
+
+export const uploadStoryPdf = (req, res, next) => {
+  bookMulter(req, res, (err) => {
+    if (err) return next(err);
+    if (req.files) {
+      // Ensure single file upload only
+      const fileList = (req.files.file || []).concat(req.files.pdf || []);
+      if (fileList.length > 1) {
+        return next(new AppError('VALIDATION_ERROR', 'Only a single book file upload is allowed', 400));
+      }
+      req.file = fileList[0] || null;
+    }
+    next();
+  });
+};
+

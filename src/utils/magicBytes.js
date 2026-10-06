@@ -2,7 +2,7 @@
  * File Magic Byte Inspection for security
  */
 
-export function validateMagicBytes(buffer, mimeType) {
+export function validateMagicBytes(buffer, mimeType, filename = '') {
   if (!buffer || buffer.length < 4) {
     return false;
   }
@@ -13,6 +13,53 @@ export function validateMagicBytes(buffer, mimeType) {
            buffer[1] === 0x50 &&
            buffer[2] === 0x44 &&
            buffer[3] === 0x46;
+  }
+
+  // DOCX / EPUB: ZIP header PK\x03\x04 (hex: 50 4B 03 04)
+  if (
+    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimeType === 'application/epub+zip'
+  ) {
+    return buffer[0] === 0x50 &&
+           buffer[1] === 0x4B &&
+           buffer[2] === 0x03 &&
+           buffer[3] === 0x04;
+  }
+
+  // DOC (Legacy Word): OLE CFB header D0 CF 11 E0
+  if (mimeType === 'application/msword') {
+    return buffer[0] === 0xD0 &&
+           buffer[1] === 0xCF &&
+           buffer[2] === 0x11 &&
+           buffer[3] === 0xE0;
+  }
+
+  // TXT (Plain text): Ensure no binary null characters
+  if (mimeType === 'text/plain') {
+    const sample = buffer.slice(0, Math.min(buffer.length, 512));
+    for (let i = 0; i < sample.length; i++) {
+      if (sample[i] === 0) return false;
+    }
+    return true;
+  }
+
+  // Extension fallback if mimeType is octet-stream
+  const ext = (filename || '').split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') {
+    return buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  if (ext === 'docx' || ext === 'epub') {
+    return buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04;
+  }
+  if (ext === 'doc') {
+    return buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0;
+  }
+  if (ext === 'txt') {
+    const sample = buffer.slice(0, Math.min(buffer.length, 512));
+    for (let i = 0; i < sample.length; i++) {
+      if (sample[i] === 0) return false;
+    }
+    return true;
   }
 
   // JPEG: FF D8 FF
@@ -45,3 +92,4 @@ export function validateMagicBytes(buffer, mimeType) {
 
   return false;
 }
+
