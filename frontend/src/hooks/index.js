@@ -1,6 +1,9 @@
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
+import { LanguageContext, useLanguage } from '../context/LanguageContext';
+
+export { useLanguage };
 
 export function useAuth() {
   const context = useContext(AuthContext);

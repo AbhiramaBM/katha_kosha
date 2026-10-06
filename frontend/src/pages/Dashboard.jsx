@@ -11,11 +11,12 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { storiesApi, authorsApi } from '../api';
-import { useAuth } from '../hooks';
+import { useAuth, useLanguage } from '../hooks';
 import { StoryReaderModal } from '../components/stories/StoryReaderModal';
 
 export default function Dashboard() {
   const { currentUser, isReader, canEdit } = useAuth();
+  const { lang, t } = useLanguage();
   const [stories, setStories] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,13 +52,13 @@ export default function Dashboard() {
       <div className="bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-7 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-amber-400 block mb-1">
-            ಕನ್ನಡ ಕಥಾ ಕೋಶ &bull; ಸಾಹಿತ್ಯ ವೇದಿಕೆ
+            {t('platformTag')}
           </span>
           <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            ನಮಸ್ಕಾರ, {currentUser?.name?.split(' ')[0] || 'ಸ್ನೇಹಿತರೆ'}!
+            {t('dashGreeting')}, {currentUser?.name?.split(' ')[0] || t('dashFriend')}!
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
-            ಕನ್ನಡ ಸಾಹಿತ್ಯ ಲೋಕದ ಅಮೂಲ್ಯ ಕೃತಿಗಳು ಹಾಗೂ ಲೇಖಕರ ವಿವರಗಳನ್ನು ಇಲ್ಲಿ ಸುಲಭವಾಗಿ ಓದಬಹುದು ಮತ್ತು ನಿರ್ವಹಿಸಬಹುದು.
+            {t('dashBannerDesc')}
           </p>
         </div>
 
@@ -68,7 +69,7 @@ export default function Dashboard() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm transition-colors"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>+ ಹೊಸ ಕಥೆ (New Story)</span>
+              <span>+ {t('navNewStory')}</span>
             </Link>
           ) : (
             <Link
@@ -76,7 +77,7 @@ export default function Dashboard() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm transition-colors"
             >
               <Compass className="w-4 h-4" />
-              <span>ಕಥೆಗಳನ್ನು ಓದಿ (Browse Stories)</span>
+              <span>{t('browseStories')}</span>
             </Link>
           )}
 
@@ -85,7 +86,7 @@ export default function Dashboard() {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-kannada text-xs font-medium transition-colors"
           >
             <Users className="w-4 h-4 text-slate-400" />
-            <span>ಸಾಹಿತಿಗಳು (Authors)</span>
+            <span>{t('navAuthors')}</span>
           </Link>
         </div>
       </div>
@@ -95,9 +96,9 @@ export default function Dashboard() {
         {/* Total Stories */}
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">ಒಟ್ಟು ಕಥೆಗಳು</span>
+            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">{t('totalStories')}</span>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{totalStories}</h3>
-            <span className="text-[11px] text-slate-400">ದಾಖಲಿತ ಕೃತಿಗಳು</span>
+            <span className="text-[11px] text-slate-400">{t('totalStoriesSub')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-amber-400 flex items-center justify-center">
             <BookOpen className="w-5 h-5" />
@@ -107,9 +108,9 @@ export default function Dashboard() {
         {/* Authors */}
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">ಸಾಹಿತಿಗಳು</span>
+            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">{t('authorsCount')}</span>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{totalAuthors}</h3>
-            <span className="text-[11px] text-slate-400">ಪ್ರಮುಖ ಲೇಖಕರು</span>
+            <span className="text-[11px] text-slate-400">{t('authorsCountSub')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-slate-800 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Users className="w-5 h-5" />
@@ -119,9 +120,9 @@ export default function Dashboard() {
         {/* Published Stories */}
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">ಪ್ರಕಟಿತ ಕೃತಿಗಳು</span>
+            <span className="font-kannada text-xs text-slate-500 dark:text-slate-400 font-medium">{t('publishedStories')}</span>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{publishedStories}</h3>
-            <span className="text-[11px] text-emerald-600 dark:text-emerald-400">ಓದಲು ಸಿದ್ಧವಾಗಿವೆ</span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400">{t('publishedStoriesSub')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
@@ -136,16 +137,16 @@ export default function Dashboard() {
           <div className="p-4 sm:p-5 border-b border-stone-100 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h2 className="font-kannada font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                ಇತ್ತೀಚಿನ ಕಥೆಗಳು (Recent Stories)
+                {t('recentStories')}
               </h2>
-              <span className="text-xs text-slate-400">ಓದಲು ಯಾವುದೇ ಕಥೆಯ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ</span>
+              <span className="text-xs text-slate-400">{t('recentStoriesSub')}</span>
             </div>
 
             <Link
               to="/stories"
               className="text-xs font-medium text-primary-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1"
             >
-              <span>ಎಲ್ಲಾ ಕಥೆಗಳು</span>
+              <span>{t('viewAllStories')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -154,23 +155,23 @@ export default function Dashboard() {
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-50/70 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 font-medium text-[11px] border-b border-stone-100 dark:border-slate-800">
                 <tr>
-                  <th className="py-2.5 px-4 font-kannada">ಕಥೆ (Title)</th>
-                  <th className="py-2.5 px-4 font-kannada">ಸಾಹಿತಿ (Author)</th>
-                  <th className="py-2.5 px-4 font-kannada">ರೂಪ</th>
-                  <th className="py-2.5 px-4 text-right font-kannada">ಕ್ರಮ</th>
+                  <th className="py-2.5 px-4 font-kannada">{t('colTitle')}</th>
+                  <th className="py-2.5 px-4 font-kannada">{t('colAuthor')}</th>
+                  <th className="py-2.5 px-4 font-kannada">{t('colFormat')}</th>
+                  <th className="py-2.5 px-4 text-right font-kannada">{t('colAction')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-slate-800">
                 {isLoading ? (
                   <tr>
                     <td colSpan="4" className="py-8 text-center text-slate-400 font-kannada">
-                      ಲೋಡ್ ಆಗುತ್ತಿದೆ...
+                      {t('loading')}
                     </td>
                   </tr>
                 ) : recentStories.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="py-8 text-center text-slate-400 font-kannada">
-                      ಯಾವುದೇ ಕಥೆಗಳು ಲಭ್ಯವಿಲ್ಲ
+                      {t('noRecentStories')}
                     </td>
                   </tr>
                 ) : (
@@ -181,18 +182,26 @@ export default function Dashboard() {
                           onClick={() => setReadingStory(story)}
                           className="font-kannada font-semibold text-xs text-slate-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-amber-400 transition-colors text-left block"
                         >
-                          {story.title_kn}
+                          {lang === 'en' && story.title_en ? story.title_en : story.title_kn}
                         </button>
-                        {story.title_en && (
-                          <span className="text-[10px] text-slate-400 block mt-0.5">{story.title_en}</span>
+                        {lang === 'en' ? (
+                          story.title_en && story.title_kn && (
+                            <span className="text-[10px] text-slate-400 block mt-0.5">{story.title_kn}</span>
+                          )
+                        ) : (
+                          story.title_en && (
+                            <span className="text-[10px] text-slate-400 block mt-0.5">{story.title_en}</span>
+                          )
                         )}
                       </td>
                       <td className="py-3 px-4 font-kannada text-slate-600 dark:text-slate-300">
-                        {story.author?.name_kn || story.author?.name_en || 'ಅಜ್ಞಾತ'}
+                        {lang === 'en'
+                          ? story.author?.name_en || story.author?.name_kn || t('unknownAuthor')
+                          : story.author?.name_kn || story.author?.name_en || t('unknownAuthor')}
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-[10px] text-slate-500 font-medium">
-                          {story.content_type === 'pdf' ? '📄 PDF' : '📝 ಪಠ್ಯ'}
+                          {story.content_type === 'pdf' ? t('pdfFormat') : t('textFormat')}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -200,7 +209,7 @@ export default function Dashboard() {
                           onClick={() => setReadingStory(story)}
                           className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-amber-400 hover:bg-primary-100 dark:hover:bg-slate-700 transition-colors"
                         >
-                          ಓದಿ (Read)
+                          {t('read')}
                         </button>
                       </td>
                     </tr>
@@ -217,18 +226,19 @@ export default function Dashboard() {
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-100 dark:border-slate-800">
               <div>
                 <h2 className="font-kannada font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                  ಸಾಹಿತಿಗಳು (Authors)
+                  {t('featuredAuthors')}
                 </h2>
-                <span className="text-xs text-slate-400">ಪ್ರಮುಖ ಸಾಹಿತಿಗಳ ವಿವರ</span>
+                <span className="text-xs text-slate-400">{t('featuredAuthorsSub')}</span>
               </div>
               <Link to="/authors" className="text-xs font-medium text-primary-600 dark:text-amber-400 hover:underline">
-                ಎಲ್ಲಾ &rarr;
+                {t('viewAllLink')}
               </Link>
             </div>
 
             <div className="flex flex-col gap-2">
               {authors.slice(0, 5).map((author) => {
                 const authorStories = stories.filter(s => s.author_id === author.id || s.author?.id === author.id).length;
+                const authorDisplayName = lang === 'en' ? (author.name_en || author.name_kn) : author.name_kn;
                 return (
                   <div
                     key={author.id}
@@ -236,14 +246,14 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-kannada font-bold text-xs flex items-center justify-center shrink-0">
-                        {author.name_kn?.charAt(0) || 'ಸಾ'}
+                        {authorDisplayName?.charAt(0) || 'A'}
                       </div>
                       <div>
                         <h3 className="font-kannada font-semibold text-xs text-slate-900 dark:text-white leading-tight">
-                          {author.name_kn}
+                          {authorDisplayName}
                         </h3>
                         <span className="text-[10px] text-slate-400">
-                          {author.place ? author.place.split(',')[0] : 'ಕರ್ನಾಟಕ'}
+                          {author.place ? author.place.split(',')[0] : (lang === 'kn' ? 'ಕರ್ನಾಟಕ' : 'Karnataka')}
                         </span>
                       </div>
                     </div>
@@ -252,7 +262,7 @@ export default function Dashboard() {
                       to={`/stories?author_id=${author.id}`}
                       className="text-[11px] font-medium text-primary-600 dark:text-amber-400 hover:underline"
                     >
-                      {authorStories} ಕೃತಿಗಳು
+                      {authorStories} {t('worksCount')}
                     </Link>
                   </div>
                 );
@@ -265,11 +275,12 @@ export default function Dashboard() {
               to="/authors"
               className="text-xs font-kannada font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
-              ಸಾಹಿತಿಗಳ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ &rarr;
+              {t('viewAllAuthorsDetails')}
             </Link>
           </div>
         </div>
       </div>
+
 
       {/* Reader Modal */}
       <StoryReaderModal

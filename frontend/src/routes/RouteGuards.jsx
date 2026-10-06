@@ -34,7 +34,7 @@ export function PublicRoute({ children }) {
   return children;
 }
 
-export function StaffRoute({ children }) {
+export function EditorRoute({ children }) {
   const { isAuthenticated, isLoading, canEdit } = useAuth();
   const location = useLocation();
 
@@ -52,6 +52,7 @@ export function StaffRoute({ children }) {
 
   return children;
 }
+
 
 export function AdminRoute({ children }) {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();

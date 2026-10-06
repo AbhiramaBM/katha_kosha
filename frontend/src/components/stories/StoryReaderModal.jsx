@@ -1,35 +1,42 @@
 import React, { useState } from 'react';
 import { BookOpen, ExternalLink, FileText, X } from 'lucide-react';
 import { Modal } from '../common/Modal';
+import { useLanguage } from '../../context/LanguageContext';
 
 export function StoryReaderModal({ story, isOpen, onClose }) {
   const [fontSize, setFontSize] = useState(18);
+  const { lang, t } = useLanguage();
 
   if (!story) return null;
 
-  const authorName = story.author?.name_kn || story.author?.name_en || 'ಅಜ್ಞಾತ ಲೇಖಕರು';
+  const authorName = lang === 'en'
+    ? (story.author?.name_en || story.author?.name_kn || t('unknownAuthor'))
+    : (story.author?.name_kn || story.author?.name_en || t('unknownAuthor'));
+
+  const storyTitle = lang === 'en' && story.title_en ? story.title_en : story.title_kn;
+  const subTitle = lang === 'en' ? (story.title_en ? story.title_kn : null) : story.title_en;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="ಕಥಾ ವಾಚನ (Story Reader)" maxWidth="max-w-3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('storyReaderTitle')} maxWidth="max-w-3xl">
       <div className="flex flex-col gap-5">
         {/* Story Header */}
         <div className="pb-4 border-b border-stone-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-kannada text-2xl font-bold text-primary-600 dark:text-white leading-tight">
-              {story.title_kn}
+              {storyTitle}
             </h2>
-            {story.title_en && (
+            {subTitle && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {story.title_en}
+                {subTitle}
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
               <span className="font-kannada font-semibold text-slate-700 dark:text-slate-300">
-                ಸಾಹಿತಿ: {authorName}
+                {t('authorPrefix')} {authorName}
               </span>
               <span className="text-slate-300 dark:text-slate-700">&bull;</span>
               <span className="text-slate-500 dark:text-slate-400">
-                {story.genre || 'ಸಾಹಿತ್ಯ'}
+                {story.genre || (lang === 'kn' ? 'ಸಾಹಿತ್ಯ' : 'Literature')}
               </span>
               {story.published_year && (
                 <>
@@ -69,10 +76,10 @@ export function StoryReaderModal({ story, isOpen, onClose }) {
               <FileText className="w-8 h-8" />
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              ಪಿಡಿಎಫ್ / ಹಸ್ತಪ್ರತಿ ದಾಖಲೆ (Archival PDF Manuscript)
+              {t('pdfDocumentTitle')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mb-6">
-              ಈ ಕೃತಿಯು ಮೂಲ ಹಸ್ತಪ್ರತಿಯ ಡಿಜಿಟಲ್ PDF ರೂಪದಲ್ಲಿದೆ. ವೀಕ್ಷಿಸಲು ಅಥವಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.
+              {t('pdfDocumentDesc')}
             </p>
 
             {story.pdf_url ? (
@@ -83,10 +90,10 @@ export function StoryReaderModal({ story, isOpen, onClose }) {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-md transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span>PDF ವೀಕ್ಷಿಸಿ / ಡೌನ್‌ಲೋಡ್ (Open PDF)</span>
+                <span>{t('openPdfBtn')}</span>
               </a>
             ) : (
-              <span className="text-xs text-amber-600 font-medium">ಪಿಡಿಎಫ್ ಫೈಲ್ ಇನ್ನೂ ಲಗತ್ತಿಸಿಲ್ಲ</span>
+              <span className="text-xs text-amber-600 font-medium">{t('noPdfAttached')}</span>
             )}
           </div>
         ) : (
@@ -100,16 +107,18 @@ export function StoryReaderModal({ story, isOpen, onClose }) {
                 dangerouslySetInnerHTML={{ __html: story.content_text.replace(/\n/g, '<br/>') }}
               />
             ) : (
-              <p className="text-slate-400 italic">ಕಥೆಯ ಪಠ್ಯ ವಿವರ ಲಭ್ಯವಿಲ್ಲ.</p>
+              <p className="text-slate-400 italic">
+                {lang === 'kn' ? 'ಕಥೆಯ ಪಠ್ಯ ವಿವರ ಲಭ್ಯವಿಲ್ಲ.' : 'Story text is not available.'}
+              </p>
             )}
           </div>
         )}
 
-        {/* Story References (Section 5, Rule 5) */}
+        {/* Story References */}
         {story.references && story.references.length > 0 && (
           <div className="pt-4 border-t border-stone-200 dark:border-slate-800">
             <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              ಉಲ್ಲೇಖ ಕೊಂಡಿಗಳು & ವಿಮರ್ಶೆಗಳು (Reference Links)
+              {lang === 'kn' ? 'ಉಲ್ಲೇಖ ಕೊಂಡಿಗಳು & ವಿಮರ್ಶೆಗಳು' : 'Reference Links & Citations'}
             </h4>
             <div className="flex flex-wrap gap-2">
               {story.references.map((ref, idx) => (

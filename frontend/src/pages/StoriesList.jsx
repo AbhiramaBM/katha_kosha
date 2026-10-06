@@ -11,12 +11,13 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { storiesApi, authorsApi } from '../api';
-import { useAuth, useToast } from '../hooks';
+import { useAuth, useToast, useLanguage } from '../hooks';
 import { StoryReaderModal } from '../components/stories/StoryReaderModal';
 
 export default function StoriesList() {
   const { isAdmin, isReader, canEdit } = useAuth();
   const toast = useToast();
+  const { lang, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [stories, setStories] = useState([]);
@@ -55,7 +56,7 @@ export default function StoriesList() {
       setStories(list);
     } catch (err) {
       console.error('Failed to load stories:', err);
-      toast.error('ಕಥೆಗಳ ಪಟ್ಟಿ ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ.');
+      toast.error(lang === 'kn' ? 'ಕಥೆಗಳ ಪಟ್ಟಿ ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ.' : 'Failed to fetch stories.');
     } finally {
       setIsLoading(false);
     }
@@ -80,18 +81,18 @@ export default function StoriesList() {
 
   const handleDelete = async (id, title) => {
     if (!isAdmin) {
-      toast.error('ಕೇವಲ ಅಡ್ಮಿನ್ ಮಾತ್ರ ಕಥೆಯನ್ನು ಅಳಿಸಬಹುದು (Admin only)');
+      toast.error(t('adminOnlyDelete'));
       return;
     }
 
-    if (!confirm(`'${title}' ಕೃತಿಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?`)) return;
+    if (!confirm(lang === 'kn' ? `'${title}' ಕೃತಿಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?` : `Are you sure you want to delete '${title}'?`)) return;
 
     try {
       await storiesApi.delete(id);
-      toast.success(`'${title}' ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ`);
+      toast.success(lang === 'kn' ? `'${title}' ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ` : `'${title}' deleted successfully`);
       loadStories();
     } catch (err) {
-      toast.error('ಕೃತಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      toast.error(t('deleteError'));
     }
   };
 
@@ -101,10 +102,10 @@ export default function StoriesList() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            ಕಥಾ ಭಂಡಾರ (Stories Archive)
+            {t('storiesArchiveTitle')}
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಕನ್ನಡ ಸಾಹಿತ್ಯದ ಕಥೆಗಳು, ಕಾದಂಬರಿಗಳು ಹಾಗೂ ಹಸ್ತಪ್ರತಿಗಳ ಸಂಗ್ರಹ
+            {t('storiesArchiveDesc')}
           </p>
         </div>
 
@@ -114,7 +115,7 @@ export default function StoriesList() {
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm transition-colors shrink-0"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>+ ಹೊಸ ಕಥೆ (New Story)</span>
+            <span>+ {t('navNewStory')}</span>
           </Link>
         )}
       </div>
@@ -129,7 +130,7 @@ export default function StoriesList() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ಕಥೆಯ ಶೀರ್ಷಿಕೆ ಅಥವಾ ವಿವರ ಹುಡುಕಿ... (Search stories)"
+              placeholder={t('searchStoriesPlaceholder')}
               className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50/50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -137,7 +138,7 @@ export default function StoriesList() {
             type="submit"
             className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium transition-colors"
           >
-            ಹುಡುಕಿ (Search)
+            {t('search')}
           </button>
         </form>
 
@@ -155,7 +156,7 @@ export default function StoriesList() {
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                ಎಲ್ಲವೂ (All)
+                {t('all')}
               </button>
               <button
                 type="button"
@@ -166,7 +167,7 @@ export default function StoriesList() {
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                ಪ್ರಕಟಿತ
+                {t('published')}
               </button>
               {canEdit && (
                 <button
@@ -178,7 +179,7 @@ export default function StoriesList() {
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  ಕರಡು
+                  {t('draft')}
                 </button>
               )}
             </div>
@@ -192,9 +193,11 @@ export default function StoriesList() {
               }}
               className="py-1 px-2.5 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
-              <option value="">ಎಲ್ಲಾ ಸಾಹಿತಿಗಳು (All Authors)</option>
+              <option value="">{t('allAuthorsDropdown')}</option>
               {authors.map(a => (
-                <option key={a.id} value={a.id}>{a.name_kn}</option>
+                <option key={a.id} value={a.id}>
+                  {lang === 'en' ? (a.name_en || a.name_kn) : a.name_kn}
+                </option>
               ))}
             </select>
 
@@ -204,9 +207,9 @@ export default function StoriesList() {
               onChange={(e) => setSelectedContentType(e.target.value)}
               className="py-1 px-2.5 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
-              <option value="">ಎಲ್ಲಾ ರೂಪಗಳು (All Formats)</option>
-              <option value="text">ಯುನಿಕೋಡ್ ಪಠ್ಯ (Text)</option>
-              <option value="pdf">ಪಿಡಿಎಫ್ (PDF)</option>
+              <option value="">{t('allFormatsDropdown')}</option>
+              <option value="text">{t('textFormatOnly')}</option>
+              <option value="pdf">{t('pdfFormatOnly')}</option>
             </select>
           </div>
 
@@ -216,7 +219,7 @@ export default function StoriesList() {
               className="text-[11px] text-slate-500 hover:text-rose-600 flex items-center gap-1"
             >
               <X className="w-3 h-3" />
-              <span>ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ (Clear)</span>
+              <span>{t('clearFilters')}</span>
             </button>
           )}
         </div>
@@ -226,98 +229,103 @@ export default function StoriesList() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="py-16 text-center text-slate-400 font-kannada text-xs">
-            ಕಥೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...
+            {t('loading')}
           </div>
         ) : stories.length === 0 ? (
           <div className="py-16 px-4 text-center">
             <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
             <h3 className="font-kannada font-bold text-sm text-slate-800 dark:text-slate-200">
-              ಯಾವುದೇ ಕಥೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ
+              {t('noStoriesFound')}
             </h3>
             <p className="font-kannada text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              ಹುಡುಕಾಟದ ಪದವನ್ನು ಬದಲಾಯಿಸಿ ಅಥವಾ ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ.
+              {t('tryAdjustingSearch')}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-stone-100 dark:divide-slate-800">
-            {stories.map((story) => (
-              <div
-                key={story.id}
-                className="p-4 sm:p-5 hover:bg-stone-50/50 dark:hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                {/* Story details */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+            {stories.map((story) => {
+              const displayTitle = lang === 'en' && story.title_en ? story.title_en : story.title_kn;
+              const secondaryTitle = lang === 'en' ? (story.title_en ? story.title_kn : null) : story.title_en;
+              const authorName = lang === 'en' ? (story.author?.name_en || story.author?.name_kn || t('unknownAuthor')) : (story.author?.name_kn || story.author?.name_en || t('unknownAuthor'));
+              return (
+                <div
+                  key={story.id}
+                  className="p-4 sm:p-5 hover:bg-stone-50/50 dark:hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  {/* Story details */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <button
+                        onClick={() => setReadingStory(story)}
+                        className="font-kannada font-bold text-sm sm:text-base text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-amber-400 transition-colors text-left"
+                      >
+                        {displayTitle}
+                      </button>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                        {story.content_type === 'pdf' ? t('pdfFormat') : t('textFormat')}
+                      </span>
+                      {story.status === 'draft' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 font-medium">
+                          {t('draft')}
+                        </span>
+                      )}
+                    </div>
+
+                    {secondaryTitle && (
+                      <p className="text-xs text-slate-400 mb-1">{secondaryTitle}</p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-kannada">
+                      <span>{t('colAuthor')}: <strong className="text-slate-700 dark:text-slate-200">{authorName}</strong></span>
+                      {story.genre && (
+                        <>
+                          <span>&bull;</span>
+                          <span>{story.genre}</span>
+                        </>
+                      )}
+                      {story.published_year && (
+                        <>
+                          <span>&bull;</span>
+                          <span>{story.published_year}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Story Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => setReadingStory(story)}
-                      className="font-kannada font-bold text-sm sm:text-base text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-amber-400 transition-colors text-left"
+                      className="px-3.5 py-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-xs transition-colors"
                     >
-                      {story.title_kn}
+                      {t('read')}
                     </button>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                      {story.content_type === 'pdf' ? '📄 PDF' : '📝 ಪಠ್ಯ'}
-                    </span>
-                    {story.status === 'draft' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 font-medium">
-                        ಕರಡು
-                      </span>
-                    )}
-                  </div>
 
-                  {story.title_en && (
-                    <p className="text-xs text-slate-400 mb-1">{story.title_en}</p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-kannada">
-                    <span>ಸಾಹಿತಿ: <strong className="text-slate-700 dark:text-slate-200">{story.author?.name_kn || 'ಅಜ್ಞಾತ'}</strong></span>
-                    {story.genre && (
+                    {canEdit && (
                       <>
-                        <span>&bull;</span>
-                        <span>{story.genre}</span>
-                      </>
-                    )}
-                    {story.published_year && (
-                      <>
-                        <span>&bull;</span>
-                        <span>{story.published_year}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Story Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => setReadingStory(story)}
-                    className="px-3.5 py-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-xs transition-colors"
-                  >
-                    ಓದಿ (Read)
-                  </button>
-
-                  {canEdit && (
-                    <>
-                      <Link
-                        to={`/stories/${story.id}/edit`}
-                        className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-                        title="ತಿದ್ದಿ (Edit)"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </Link>
-
-                      {isAdmin && (
-                        <button
-                          onClick={() => handleDelete(story.id, story.title_kn)}
-                          className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                          title="ಅಳಿಸಿ (Delete)"
+                        <Link
+                          to={`/stories/${story.id}/edit`}
+                          className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
+                          title={t('edit')}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </>
-                  )}
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </Link>
+
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(story.id, story.title_kn)}
+                            className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                            title={t('delete')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -15,32 +15,34 @@ import {
   Compass,
   Languages
 } from 'lucide-react';
-import { useAuth, useTheme } from '../../hooks';
+import { useAuth, useTheme, useLanguage } from '../../hooks';
+import { LanguageToggle } from '../common/LanguageToggle';
 
 export function AppLayout({ children }) {
   const { currentUser, logout, isAdmin, isReader, canEdit, isUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { lang, t } = useLanguage();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     {
       to: '/dashboard',
-      label: 'ಮುಖಪುಟ (Home)',
+      label: t('navHome'),
       icon: <LayoutDashboard className="w-4 h-4" />
     },
     {
       to: '/stories',
-      label: 'ಕಥೆಗಳು (Stories)',
+      label: t('navStories'),
       icon: <BookOpen className="w-4 h-4" />
     }
   ];
 
-  // Staff only (Admin & Editor): New Story
+  // Editors & Admin only: New Story
   if (canEdit) {
     navItems.push({
       to: '/stories/new',
-      label: 'ಹೊಸ ಕಥೆ (New Story)',
+      label: t('navNewStory'),
       icon: <PenTool className="w-4 h-4" />
     });
   }
@@ -48,7 +50,7 @@ export function AppLayout({ children }) {
   // Authors directory
   navItems.push({
     to: '/authors',
-    label: 'ಸಾಹಿತಿಗಳು (Authors)',
+    label: t('navAuthors'),
     icon: <Users className="w-4 h-4" />
   });
 
@@ -56,7 +58,7 @@ export function AppLayout({ children }) {
   if (isAdmin) {
     navItems.push({
       to: '/users',
-      label: 'ಬಳಕೆದಾರರು (Users)',
+      label: t('navUsers'),
       icon: <UserCheck className="w-4 h-4" />
     });
   }
@@ -87,10 +89,10 @@ export function AppLayout({ children }) {
               </div>
               <div>
                 <span className="font-kannada font-bold text-sm text-slate-900 dark:text-white block leading-tight">
-                  ಕನ್ನಡ ಕಥಾ ಕೋಶ
+                  {t('appName')}
                 </span>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                  ಡಿಜಿಟಲ್ ಸಾಹಿತ್ಯ ಭಂಡಾರ
+                  {t('appSubtitle')}
                 </span>
               </div>
             </Link>
@@ -98,6 +100,7 @@ export function AppLayout({ children }) {
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              aria-label={t('close')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -140,16 +143,16 @@ export function AppLayout({ children }) {
               </div>
               <div className="overflow-hidden">
                 <span className="text-xs font-medium text-slate-800 dark:text-slate-200 block truncate">
-                  {currentUser?.name || 'ಬಳಕೆದಾರರು'}
+                  {currentUser?.name || t('userFallback')}
                 </span>
                 <span className="text-[10px] text-slate-400 block capitalize">
                   {currentUser?.role === 'admin'
-                    ? 'ಆಡಳಿತಗಾರ (Admin)'
+                    ? t('roleAdmin')
                     : currentUser?.role === 'user'
-                    ? 'ಓದುಗರು (User - Read Only)'
+                    ? t('roleUser')
                     : isReader
-                    ? 'ಓದುಗರು (Reader)'
-                    : 'ಸಂಪಾದಕರು (Editor)'}
+                    ? t('roleReader')
+                    : t('roleEditor')}
                 </span>
               </div>
             </div>
@@ -160,7 +163,7 @@ export function AppLayout({ children }) {
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors w-full text-left font-medium"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>ಲಾಗೌಟ್ (Sign Out)</span>
+            <span>{t('signOut')}</span>
           </button>
         </div>
       </aside>
@@ -173,43 +176,38 @@ export function AppLayout({ children }) {
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Open menu"
+              aria-label={t('openMenu')}
             >
               <Menu className="w-5 h-5" />
             </button>
 
             <span className="font-kannada text-xs font-semibold text-slate-600 dark:text-slate-300 hidden sm:inline">
-              ಕನ್ನಡ ಕಥಾ ಕೋಶ &bull; ಸಾಹಿತ್ಯ ಭಂಡಾರ
+              {t('headerTitle')}
             </span>
           </div>
 
           {/* Right Header items */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Kannada / English Script Support indicator */}
-            <div 
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-slate-800 bg-stone-50/70 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300 font-medium"
-              title="ಕನ್ನಡ ಮತ್ತು ಇಂಗ್ಲಿಷ್ ಫೋನೆಟಿಕ್ ಬೆಂಬಲ (Kannada & English Phonetic Typing Supported)"
-            >
-              <Languages className="w-3.5 h-3.5 text-primary-600 dark:text-amber-400" />
-              <span className="font-kannada text-[11px]">ಕನ್ನಡ / Eng</span>
-            </div>
-
             {/* Quick Add Story Button (if can edit) */}
             {canEdit ? (
               <Link
                 to="/stories/new"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium transition-colors"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
-                <span className="font-kannada">+ ಹೊಸ ಕಥೆ (New Story)</span>
+                <span className="font-kannada">+ {t('navNewStory')}</span>
               </Link>
             ) : null}
+
+            {/* Language Toggle: Kannada ↔ English */}
+            <LanguageToggle />
 
             {/* Dark / Light Mode Toggle */}
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-stone-200 dark:border-slate-800 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Toggle theme"
+              aria-label={t('toggleTheme')}
+              title={t('toggleTheme')}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>

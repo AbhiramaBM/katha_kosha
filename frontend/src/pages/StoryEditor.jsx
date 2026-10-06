@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { storiesApi, authorsApi } from '../api';
-import { useToast } from '../hooks';
+import { useToast, useLanguage } from '../hooks';
 import { Button, Input, KannadaInput } from '../components/common';
 
 export default function StoryEditor() {
@@ -20,6 +20,7 @@ export default function StoryEditor() {
   const isEditing = !!id;
   const navigate = useNavigate();
   const toast = useToast();
+  const { lang, t } = useLanguage();
 
   const [authors, setAuthors] = useState([]);
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -179,15 +180,16 @@ export default function StoryEditor() {
             <Link
               to="/stories"
               className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-slate-500 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+              title={t('back')}
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
               <h1 className="font-kannada text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                {isEditing ? 'ಕಥೆ ತಿದ್ದುಪಡಿ (Edit Story)' : 'ಹೊಸ ಕಥೆ ರಚನೆ (New Story)'}
+                {isEditing ? t('editorEditStoryTitle') : t('editorNewStoryTitle')}
               </h1>
               <p className="text-xs text-slate-400">
-                ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ ನಂತರ ಉಳಿಸಿ
+                {lang === 'kn' ? 'ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ ನಂತರ ಉಳಿಸಿ' : 'Fill in the details and save'}
               </p>
             </div>
           </div>
@@ -199,7 +201,7 @@ export default function StoryEditor() {
             leftIcon={<Save className="w-4 h-4" />}
             className="bg-primary-600 hover:bg-primary-700 text-white font-kannada font-semibold text-xs"
           >
-            {isSaving ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ಕಥೆ ಉಳಿಸಿ (Save Story)'}
+            {isSaving ? t('saving') : t('saveStoryBtn')}
           </Button>
         </div>
 
@@ -217,23 +219,23 @@ export default function StoryEditor() {
           <div className="lg:col-span-2 flex flex-col gap-5">
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 p-5 flex flex-col gap-4">
               <h2 className="font-kannada font-bold text-sm text-slate-900 dark:text-white pb-2 border-b border-stone-100 dark:border-slate-800">
-                ಮೂಲ ವಿವರಗಳು (Story Details)
+                {lang === 'kn' ? 'ಮೂಲ ವಿವರಗಳು (Story Details)' : 'Story Details'}
               </h2>
 
               {/* Title Kannada */}
               <KannadaInput
-                label="ಕನ್ನಡ ಶೀರ್ಷಿಕೆ (Title in Kannada)"
+                label={t('titleKnLabel')}
                 id="titleKn"
                 value={titleKn}
                 onChange={setTitleKn}
-                placeholder="ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, karvalo -> ಕರ್ವಾಲೋ)..."
+                placeholder={lang === 'kn' ? 'ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, karvalo -> ಕರ್ವಾಲೋ)...' : 'Type English to get Kannada (e.g. karvalo -> ಕರ್ವಾಲೋ)...'}
                 required
               />
 
               {/* Title English */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  English Title (Optional)
+                  {t('titleEnLabel')}
                 </label>
                 <input
                   type="text"
@@ -246,13 +248,13 @@ export default function StoryEditor() {
 
               {/* Summary */}
               <KannadaInput
-                label="ಸಂಕ್ಷಿಪ್ತ ಸಾರಾಂಶ (Brief Summary)"
+                label={t('summaryLabel')}
                 id="summary"
                 value={summary}
                 onChange={setSummary}
                 multiline
                 rows={2}
-                placeholder="ಕಥೆಯ ಒಂದು ಸಾಲಿನ ಅಥವಾ ಕಿರು ಸಾರಾಂಶ..."
+                placeholder={lang === 'kn' ? 'ಕಥೆಯ ಒಂದು ಸಾಲಿನ ಅಥವಾ ಕಿರು ಸಾರಾಂಶ...' : 'Short one-line summary...'}
               />
             </div>
 
@@ -260,7 +262,7 @@ export default function StoryEditor() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between pb-2 border-b border-stone-100 dark:border-slate-800">
                 <h2 className="font-kannada font-bold text-sm text-slate-900 dark:text-white">
-                  ಕಥಾ ವಿಷಯ (Content)
+                  {lang === 'kn' ? 'ಕಥಾ ವಿಷಯ (Content)' : 'Story Content'}
                 </h2>
 
                 {/* Content Type Switch */}
@@ -274,7 +276,7 @@ export default function StoryEditor() {
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
                     }`}
                   >
-                    📝 ಯುನಿಕೋಡ್ ಪಠ್ಯ (Text)
+                    {t('optDigitalText')}
                   </button>
                   <button
                     type="button"
@@ -285,29 +287,29 @@ export default function StoryEditor() {
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
                     }`}
                   >
-                    📄 ಪಿಡಿಎಫ್ (PDF)
+                    {t('optArchivalPdf')}
                   </button>
                 </div>
               </div>
 
               {contentType === 'text' ? (
                 <KannadaInput
-                  label="ಕಥೆಯ ಪೂರ್ಣ ಪಠ್ಯ (Full Story Text)"
+                  label={t('fullTextLabel')}
                   id="contentText"
                   value={contentText}
                   onChange={setContentText}
                   multiline
                   rows={12}
-                  placeholder="ಇಲ್ಲಿ ಕಥೆಯ ಪಠ್ಯವನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ) ಅಥವಾ ಪೇಸ್ಟ್ ಮಾಡಿ..."
+                  placeholder={lang === 'kn' ? 'ಇಲ್ಲಿ ಕಥೆಯ ಪಠ್ಯವನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ) ಅಥವಾ ಪೇಸ್ಟ್ ಮಾಡಿ...' : 'Type or paste the story text here...'}
                 />
               ) : (
                 <div className="p-6 border-2 border-dashed border-stone-200 dark:border-slate-700 rounded-xl text-center">
                   <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <p className="font-kannada text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    PDF ಹಸ್ತಪ್ರತಿ ಅಥವಾ ದಾಖಲೆಯನ್ನು ಲಗತ್ತಿಸಿ
+                    {lang === 'kn' ? 'PDF ಹಸ್ತಪ್ರತಿ ಅಥವಾ ದಾಖಲೆಯನ್ನು ಲಗತ್ತಿಸಿ' : 'Attach archival PDF manuscript'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1 mb-4">
-                    ಗರಿಷ್ಠ 50MB PDF ಫೈಲ್
+                    {lang === 'kn' ? 'ಗರಿಷ್ಠ 50MB PDF ಫೈಲ್' : 'Max 50MB PDF file'}
                   </p>
 
                   <input
@@ -319,7 +321,10 @@ export default function StoryEditor() {
 
                   {existingPdfUrl && !pdfFile && (
                     <div className="mt-3 text-xs text-slate-500">
-                      ಈಗಾಗಲೇ ಇರುವ PDF: <a href={existingPdfUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">ತೆರೆಯಿರಿ</a>
+                      {lang === 'kn' ? 'ಈಗಾಗಲೇ ಇರುವ PDF: ' : 'Existing PDF: '}
+                      <a href={existingPdfUrl} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">
+                        {lang === 'kn' ? 'ತೆರೆಯಿರಿ' : 'Open'}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -331,13 +336,13 @@ export default function StoryEditor() {
           <div className="flex flex-col gap-5">
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 p-5 flex flex-col gap-4">
               <h2 className="font-kannada font-bold text-sm text-slate-900 dark:text-white pb-2 border-b border-stone-100 dark:border-slate-800">
-                ಪ್ರಕಟಣಾ ವಿವರ (Publish Settings)
+                {lang === 'kn' ? 'ಪ್ರಕಟಣಾ ವಿವರ (Publish Settings)' : 'Publish Settings'}
               </h2>
 
               {/* Author */}
               <div>
                 <label className="block font-kannada text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                  ಸಾಹಿತಿ (Author) *
+                  {t('authorSelectLabel')} *
                 </label>
                 <select
                   value={authorId}
@@ -345,9 +350,11 @@ export default function StoryEditor() {
                   required
                   className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="">-- ಸಾಹಿತಿ ಆಯ್ಕೆಮಾಡಿ --</option>
+                  <option value="">{lang === 'kn' ? '-- ಸಾಹಿತಿ ಆಯ್ಕೆಮಾಡಿ --' : '-- Select Author --'}</option>
                   {authors.map(a => (
-                    <option key={a.id} value={a.id}>{a.name_kn}</option>
+                    <option key={a.id} value={a.id}>
+                      {lang === 'en' ? (a.name_en || a.name_kn) : a.name_kn}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -355,47 +362,47 @@ export default function StoryEditor() {
               {/* Status */}
               <div>
                 <label className="block font-kannada text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                  ಸ್ಥಿತಿ (Status)
+                  {t('publicationStatusLabel')}
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="published">ಪ್ರಕಟಿತ (Published - Visible to Readers)</option>
-                  <option value="draft">ಕರಡು (Draft - Hidden)</option>
+                  <option value="published">{t('optPublishedPublic')}</option>
+                  <option value="draft">{t('optDraftPrivate')}</option>
                 </select>
               </div>
 
               {/* Genre */}
               <div>
                 <label className="block font-kannada text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  ಸಾಹಿತ್ಯ ಪ್ರಕಾರ (Genre)
+                  {t('genreLabel')}
                 </label>
                 <select
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="ಕಾದಂಬರಿ (Novel)">ಕಾದಂಬರಿ (Novel)</option>
-                  <option value="ಸಣ್ಣ ಕಥೆ (Short Story)">ಸಣ್ಣ ಕಥೆ (Short Story)</option>
-                  <option value="ನಾಟಕ (Play)">ನಾಟಕ (Play)</option>
-                  <option value="ಕವನ (Poetry)">ಕವನ (Poetry)</option>
-                  <option value="ವಿಮರ್ಶೆ (Critique)">ವಿಮರ್ಶೆ (Critique)</option>
-                  <option value="ಇತರ (Other)">ಇತರ (Other)</option>
+                  <option value="ಕಾದಂಬರಿ (Novel)">{lang === 'kn' ? 'ಕಾದಂಬರಿ (Novel)' : 'Novel'}</option>
+                  <option value="ಸಣ್ಣ ಕಥೆ (Short Story)">{lang === 'kn' ? 'ಸಣ್ಣ ಕಥೆ (Short Story)' : 'Short Story'}</option>
+                  <option value="ನಾಟಕ (Play)">{lang === 'kn' ? 'ನಾಟಕ (Play)' : 'Play'}</option>
+                  <option value="ಕವನ (Poetry)">{lang === 'kn' ? 'ಕವನ (Poetry)' : 'Poetry'}</option>
+                  <option value="ವಿಮರ್ಶೆ (Critique)">{lang === 'kn' ? 'ವಿಮರ್ಶೆ (Critique)' : 'Critique'}</option>
+                  <option value="ಇತರ (Other)">{lang === 'kn' ? 'ಇತರ (Other)' : 'Other'}</option>
                 </select>
               </div>
 
               {/* Published Year */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  ಪ್ರಕಟಿತ ವರ್ಷ (Published Year)
+                  {t('pubYearLabel')}
                 </label>
                 <input
                   type="number"
                   value={publishedYear}
                   onChange={(e) => setPublishedYear(e.target.value)}
-                  placeholder="ಉದಾ: 1975"
+                  placeholder="e.g. 1975"
                   className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -404,7 +411,7 @@ export default function StoryEditor() {
               <div className="pt-2 border-t border-stone-100 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-kannada text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    ಉಲ್ಲೇಖಗಳು (References)
+                    {lang === 'kn' ? 'ಉಲ್ಲೇಖಗಳು (References)' : 'References'}
                   </span>
                   <button
                     type="button"
@@ -412,19 +419,19 @@ export default function StoryEditor() {
                     className="text-[11px] font-semibold text-primary-600 dark:text-amber-400 hover:underline flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>+ ಸೇರಿಸಿ</span>
+                    <span>+ {lang === 'kn' ? 'ಸೇರಿಸಿ' : 'Add'}</span>
                   </button>
                 </div>
 
                 {references.length === 0 ? (
-                  <p className="text-[11px] text-slate-400">ಉಲ್ಲೇಖಗಳಿಲ್ಲ</p>
+                  <p className="text-[11px] text-slate-400">{lang === 'kn' ? 'ಉಲ್ಲೇಖಗಳಿಲ್ಲ' : 'No references'}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {references.map((ref, idx) => (
                       <div key={idx} className="flex items-center gap-1.5">
                         <input
                           type="text"
-                          placeholder="ಶೀರ್ಷಿಕೆ (Title)"
+                          placeholder={lang === 'kn' ? 'ಶೀರ್ಷಿಕೆ (Title)' : 'Title'}
                           value={ref.name}
                           onChange={(e) => updateReference(idx, 'name', e.target.value)}
                           className="w-1/2 p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] focus:outline-none"
@@ -458,7 +465,7 @@ export default function StoryEditor() {
                 leftIcon={<Save className="w-4 h-4" />}
                 className="mt-2 bg-primary-600 hover:bg-primary-700 text-white font-kannada font-semibold text-xs"
               >
-                {isSaving ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ಕಥೆ ಉಳಿಸಿ (Save Story)'}
+                {isSaving ? t('saving') : t('saveStoryBtn')}
               </Button>
             </div>
           </div>

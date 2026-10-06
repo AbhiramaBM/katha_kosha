@@ -13,12 +13,13 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { authorsApi, storiesApi } from '../api';
-import { useAuth, useToast } from '../hooks';
+import { useAuth, useToast, useLanguage } from '../hooks';
 import { Modal, Button, Input, KannadaInput } from '../components/common';
 
 export default function AuthorsList() {
   const { isAdmin, isReader, canEdit } = useAuth();
   const toast = useToast();
+  const { lang, t } = useLanguage();
 
   const [authors, setAuthors] = useState([]);
   const [stories, setStories] = useState([]);
@@ -50,7 +51,7 @@ export default function AuthorsList() {
       setStories(storiesRes.data?.data || []);
     } catch (err) {
       console.error('Failed to load authors:', err);
-      toast.error('ಸಾಹಿತಿಗಳ ಪಟ್ಟಿ ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      toast.error(lang === 'kn' ? 'ಸಾಹಿತಿಗಳ ಪಟ್ಟಿ ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ' : 'Failed to load authors list');
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +90,7 @@ export default function AuthorsList() {
     setModalError('');
 
     if (!nameKn.trim()) {
-      setModalError('ಕನ್ನಡ ಹೆಸರು ಕಡ್ಡಾಯವಾಗಿದೆ (Kannada name is required)');
+      setModalError(lang === 'kn' ? 'ಕನ್ನಡ ಹೆಸರು ಕಡ್ಡಾಯವಾಗಿದೆ' : 'Kannada name is required');
       return;
     }
 
@@ -106,16 +107,16 @@ export default function AuthorsList() {
     try {
       if (editingAuthor) {
         await authorsApi.update(editingAuthor.id, payload);
-        toast.success('ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ');
+        toast.success(lang === 'kn' ? 'ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ' : 'Author updated successfully');
       } else {
         await authorsApi.create(payload);
-        toast.success('ಹೊಸ ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ');
+        toast.success(lang === 'kn' ? 'ಹೊಸ ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ' : 'Author added successfully');
       }
       setModalOpen(false);
       loadData();
     } catch (err) {
       console.error(err);
-      setModalError(err.response?.data?.error?.message || 'ಸಾಹಿತಿ ವಿವರ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      setModalError(err.response?.data?.error?.message || (lang === 'kn' ? 'ಸಾಹಿತಿ ವಿವರ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ' : 'Failed to save author'));
     } finally {
       setIsSubmitting(false);
     }
@@ -123,18 +124,18 @@ export default function AuthorsList() {
 
   const handleDelete = async (author) => {
     if (!isAdmin) {
-      toast.error('ಕೇವಲ ಅಡ್ಮಿನ್ ಮಾತ್ರ ಸಾಹಿತಿಯನ್ನು ಅಳಿಸಬಹುದು (Admin only)');
+      toast.error(lang === 'kn' ? 'ಕೇವಲ ಅಡ್ಮಿನ್ ಮಾತ್ರ ಸಾಹಿತಿಯನ್ನು ಅಳಿಸಬಹುದು' : 'Admin only');
       return;
     }
 
-    if (!confirm(`'${author.name_kn}' ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?`)) return;
+    if (!confirm(lang === 'kn' ? `'${author.name_kn}' ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?` : `Are you sure you want to delete '${author.name_en || author.name_kn}'?`)) return;
 
     try {
       await authorsApi.delete(author.id);
-      toast.success('ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ');
+      toast.success(lang === 'kn' ? 'ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ' : 'Author deleted successfully');
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.error?.message || 'ಸಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      toast.error(err.response?.data?.error?.message || (lang === 'kn' ? 'ಸಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ' : 'Failed to delete author'));
     }
   };
 
@@ -144,10 +145,10 @@ export default function AuthorsList() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            ಸಾಹಿತಿಗಳು (Authors Directory)
+            {t('authorsPageTitle')}
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಕನ್ನಡ ಸಾಹಿತ್ಯ ಲೋಕದ ಪ್ರಮುಖ ಕವಿಗಳು, ಕಾದಂಬರಿಕಾರರು ಹಾಗೂ ಕಥೆಗಾರರು
+            {t('authorsPageDesc')}
           </p>
         </div>
 
@@ -158,7 +159,7 @@ export default function AuthorsList() {
             leftIcon={<PlusCircle className="w-4 h-4" />}
             className="bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm"
           >
-            + ಹೊಸ ಸಾಹಿತಿ ಸೇರಿಸಿ (Add Author)
+            {t('addNewAuthor')}
           </Button>
         )}
       </div>
@@ -171,7 +172,7 @@ export default function AuthorsList() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ಸಾಹಿತಿಯ ಹೆಸರು ಅಥವಾ ಊರನ್ನು ಹುಡುಕಿ... (Search authors by name or place)"
+            placeholder={t('searchAuthorsPlaceholder')}
             className="w-full pl-9 pr-4 py-2 rounded-xl border-none bg-stone-50/60 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
@@ -180,16 +181,16 @@ export default function AuthorsList() {
       {/* Authors Grid */}
       {isLoading ? (
         <div className="py-20 text-center text-slate-400 font-kannada text-xs">
-          ಸಾಹಿತಿಗಳ ಪಟ್ಟಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
+          {t('loading')}
         </div>
       ) : authors.length === 0 ? (
         <div className="py-16 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 text-center">
           <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
           <h3 className="font-kannada font-bold text-sm text-slate-800 dark:text-slate-200">
-            ಯಾವುದೇ ಸಾಹಿತಿಗಳು ಕಂಡುಬಂದಿಲ್ಲ
+            {t('noAuthorsFound')}
           </h3>
           <p className="font-kannada text-xs text-slate-400 mt-1">
-            ಹುಡುಕಾಟದ ಪದವನ್ನು ಬದಲಾಯಿಸಿ.
+            {t('tryAdjustingSearch')}
           </p>
         </div>
       ) : (
@@ -198,6 +199,9 @@ export default function AuthorsList() {
             const authorStoryCount = stories.filter(
               (s) => s.author_id === author.id || s.author?.id === author.id
             ).length;
+
+            const primaryName = lang === 'en' ? (author.name_en || author.name_kn) : author.name_kn;
+            const secondaryName = lang === 'en' ? (author.name_en ? author.name_kn : null) : author.name_en;
 
             return (
               <div
@@ -215,16 +219,16 @@ export default function AuthorsList() {
                         />
                       ) : (
                         <div className="w-11 h-11 rounded-xl bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-amber-400 font-kannada font-bold text-sm flex items-center justify-center">
-                          {author.name_kn?.charAt(0) || 'ಸಾ'}
+                          {primaryName?.charAt(0) || 'A'}
                         </div>
                       )}
                       <div>
                         <h3 className="font-kannada font-bold text-sm text-slate-900 dark:text-white leading-tight">
-                          {author.name_kn}
+                          {primaryName}
                         </h3>
-                        {author.name_en && (
+                        {secondaryName && (
                           <span className="text-[11px] text-slate-400 block mt-0.5">
-                            {author.name_en}
+                            {secondaryName}
                           </span>
                         )}
                       </div>
@@ -235,7 +239,7 @@ export default function AuthorsList() {
                         <button
                           onClick={() => openEditModal(author)}
                           className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                          title="ತಿದ್ದಿ (Edit)"
+                          title={t('edit')}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
@@ -243,7 +247,7 @@ export default function AuthorsList() {
                           <button
                             onClick={() => handleDelete(author)}
                             className="p-1 rounded-lg text-slate-400 hover:text-rose-600"
-                            title="ಅಳಿಸಿ (Delete)"
+                            title={t('delete')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -259,7 +263,7 @@ export default function AuthorsList() {
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
                         <span>
                           {author.birth_year ? `${author.birth_year}` : ''}
-                          {author.death_year ? ` - ${author.death_year}` : ' - ಪ್ರಸ್ತುತ'}
+                          {author.death_year ? ` - ${author.death_year}` : (lang === 'kn' ? ' - ಪ್ರಸ್ತುತ' : ' - Present')}
                         </span>
                       </div>
                     )}
@@ -282,13 +286,13 @@ export default function AuthorsList() {
                 {/* Footer link to author's stories */}
                 <div className="pt-3 border-t border-stone-100 dark:border-slate-800 flex items-center justify-between">
                   <span className="text-xs text-slate-400">
-                    {authorStoryCount} ಕೃತಿಗಳು
+                    {authorStoryCount} {t('worksCount')}
                   </span>
                   <Link
                     to={`/stories?author_id=${author.id}`}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-amber-400 hover:underline"
                   >
-                    <span>ಕೃತಿಗಳನ್ನು ಓದಿ &rarr;</span>
+                    <span>{t('readWorksBtn')} &rarr;</span>
                   </Link>
                 </div>
               </div>
@@ -301,7 +305,7 @@ export default function AuthorsList() {
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingAuthor ? 'ಸಾಹಿತಿ ವಿವರ ತಿದ್ದಿ (Edit Author)' : 'ಹೊಸ ಸಾಹಿತಿ ಸೇರಿಸಿ (Add Author)'}
+        title={editingAuthor ? t('modalEditAuthor') : t('modalAddAuthor')}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSaveAuthor} className="flex flex-col gap-4">
@@ -313,16 +317,16 @@ export default function AuthorsList() {
           )}
 
           <KannadaInput
-            label="ಕನ್ನಡ ಹೆಸರು (Kannada Name)"
+            label={t('nameKnLabel')}
             id="nameKn"
             value={nameKn}
             onChange={setNameKn}
-            placeholder="ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, kuvempu -> ಕುವೆಂಪು)..."
+            placeholder={lang === 'kn' ? 'ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, kuvempu -> ಕುವೆಂಪು)...' : 'Type in English to get Kannada (e.g. kuvempu -> ಕುವೆಂಪು)...'}
             required
           />
 
           <Input
-            label="English Name (Optional)"
+            label={t('nameEnLabel')}
             id="nameEn"
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
@@ -331,7 +335,7 @@ export default function AuthorsList() {
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="ಜನನ ವರ್ಷ (Birth Year)"
+              label={t('birthYearLabel')}
               id="birthYear"
               type="number"
               value={birthYear}
@@ -339,31 +343,31 @@ export default function AuthorsList() {
               placeholder="1904"
             />
             <Input
-              label="ನಿಧನ ವರ್ಷ (Death Year)"
+              label={t('deathYearLabel')}
               id="deathYear"
               type="number"
               value={deathYear}
               onChange={(e) => setDeathYear(e.target.value)}
-              placeholder="1994 (ಖಾಲಿ ಬಿಡಿ)"
+              placeholder={lang === 'kn' ? '1994 (ಖಾಲಿ ಬಿಡಿ)' : '1994 (leave blank)'}
             />
           </div>
 
           <KannadaInput
-            label="ಸ್ಥಳ / ಊರು (Place)"
+            label={t('placeLabel')}
             id="place"
             value={place}
             onChange={setPlace}
-            placeholder="ಉದಾ: kuppalli, shivamogga -> ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ..."
+            placeholder={lang === 'kn' ? 'ಉದಾ: kuppalli, shivamogga -> ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ...' : 'e.g. kuppalli, shivamogga...'}
           />
 
           <KannadaInput
-            label="ಕಿರು ಪರಿಚಯ (Biography)"
+            label={t('bioLabel')}
             id="bio"
             value={bio}
             onChange={setBio}
             multiline
             rows={3}
-            placeholder="ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯಿಕ ಕೊಡುಗೆ ಮತ್ತು ಕಿರು ಪರಿಚಯ..."
+            placeholder={lang === 'kn' ? 'ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯಿಕ ಕೊಡುಗೆ ಮತ್ತು ಕಿರು ಪರಿಚಯ...' : 'Author contribution and biography...'}
           />
 
           <div className="flex justify-end gap-2 pt-3 border-t border-stone-100 dark:border-slate-800">
@@ -373,7 +377,7 @@ export default function AuthorsList() {
               size="sm"
               onClick={() => setModalOpen(false)}
             >
-              ರದ್ದುಮಾಡಿ (Cancel)
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -381,7 +385,7 @@ export default function AuthorsList() {
               isLoading={isSubmitting}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              ಉಳಿಸಿ (Save)
+              {t('save')}
             </Button>
           </div>
         </form>

@@ -8,21 +8,19 @@ import {
   AlertCircle, 
   Sun, 
   Moon, 
-  Compass, 
-  ShieldCheck, 
-  UserCheck 
+  Lock,
+  Info
 } from 'lucide-react';
-import { useAuth, useTheme } from '../hooks';
+import { useAuth, useTheme, useLanguage } from '../hooks';
 import { VALIDATION_RULES } from '../utils/validation';
-import { Input, PasswordInput, Button } from '../components/common';
+import { Input, PasswordInput, Button, LanguageToggle } from '../components/common';
 
 export default function Login() {
-  const { login, loginAsReader } = useAuth();
+  const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { lang, t } = useLanguage();
   const navigate = useNavigate();
   const [apiError, setApiError] = useState('');
-  const [activeTab, setActiveTab] = useState('reader'); // 'reader' | 'staff'
-  const [isReaderLoading, setIsReaderLoading] = useState(false);
 
   const {
     register,
@@ -42,20 +40,12 @@ export default function Login() {
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err) {
-      setApiError(err.message || 'ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.');
-    }
-  };
-
-  const handleReaderAccess = async () => {
-    setIsReaderLoading(true);
-    setApiError('');
-    try {
-      await loginAsReader();
-      navigate('/dashboard');
-    } catch (err) {
-      setApiError('ಓದುಗರ ಪ್ರವೇಶ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.');
-    } finally {
-      setIsReaderLoading(false);
+      setApiError(
+        err.message || 
+        (lang === 'kn' 
+          ? 'ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.' 
+          : 'Sign in failed. Please verify your credentials.')
+      );
     }
   };
 
@@ -75,21 +65,28 @@ export default function Login() {
           </div>
           <div>
             <span className="font-kannada font-bold text-base text-slate-900 dark:text-white leading-none block">
-              ಕನ್ನಡ ಕಥಾ ಕೋಶ
+              {t('appName')}
             </span>
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              Kannada Story Archive
+              {t('appSubtitle')}
             </span>
           </div>
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl border border-stone-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-900 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Language Toggle */}
+          <LanguageToggle />
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 sm:p-2 rounded-xl border border-stone-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-900 transition-colors"
+            aria-label={t('toggleTheme')}
+            title={t('toggleTheme')}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Main Center Card */}
@@ -99,39 +96,21 @@ export default function Login() {
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              ಸ್ವಾಗತ (Welcome)
+              {t('loginWelcome')}
             </h1>
             <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              ಕನ್ನಡ ಕಥೆಗಳು ಹಾಗೂ ಸಾಹಿತಿಗಳ ಮುಕ್ತ ಡಿಜಿಟಲ್ ಭಂಡಾರ
+              {t('loginSubtitle')}
             </p>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 bg-stone-100 dark:bg-slate-800/80 rounded-xl mb-6 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setActiveTab('reader')}
-              className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === 'reader'
-                  ? 'bg-white dark:bg-slate-900 text-primary-600 dark:text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-500" />
-              <span>ಓದುಗರು (Reader)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('staff')}
-              className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === 'staff'
-                  ? 'bg-white dark:bg-slate-900 text-primary-600 dark:text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
-              <span>ಸಂಪಾದಕರು (Staff)</span>
-            </button>
+          {/* Access Policy Info Box */}
+          <div className="mb-6 p-3.5 rounded-xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/70 dark:border-slate-700/60 flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+            <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+            <p className="font-kannada text-[11px] sm:text-xs leading-relaxed">
+              {lang === 'kn' 
+                ? 'ಓದುಗರು ಹಾಗೂ ಸಂಪಾದಕರ ಖಾತೆಗಳನ್ನು ಮುಖ್ಯ ಆಡಳಿತಗಾರರು (Admin) ರಚಿಸುತ್ತಾರೆ. ಪ್ರವೇಶ ಪಡೆಯಲು ನಿಮ್ಮ ನೋಂದಾಯಿತ ಇಮೇಲ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಬಳಸಿ.'
+                : 'Reader and Editor accounts are created by the Admin. Please sign in with your registered email and password.'}
+            </p>
           </div>
 
           {/* Error Message */}
@@ -142,100 +121,81 @@ export default function Login() {
             </div>
           )}
 
-          {/* Tab 1: Reader / Public Login */}
-          {activeTab === 'reader' && (
-            <div className="flex flex-col gap-4 text-center">
-              <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-slate-800/40 border border-amber-200/60 dark:border-slate-800 text-left">
-                <h3 className="font-kannada font-bold text-sm text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
-                  <span>📖 ಸಾರ್ವಜನಿಕ ಉಚಿತ ಪ್ರವೇಶ</span>
-                </h3>
-                <p className="font-kannada text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  ಕುವೆಂಪು, ಬೇಂದ್ರೆ, ತೇಜಸ್ವಿ ಮೊದಲಾದ ಮಹಾನ್ ಸಾಹಿತಿಗಳ ಕಥೆಗಳನ್ನು ಓದಲು ಯಾವುದೇ ಪಾಸ್‌ವರ್ಡ್ ಅಗತ್ಯವಿಲ್ಲ.
-                </p>
+          {/* Sign In Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+            <Input
+              label={lang === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸ (Email)' : 'Email Address'}
+              id="email"
+              type="email"
+              placeholder="user@example.com"
+              required
+              leftIcon={<Mail className="w-4 h-4" />}
+              error={errors.email?.message}
+              {...register('email', VALIDATION_RULES.email)}
+            />
+
+            <PasswordInput
+              label={lang === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್ (Password)' : 'Password'}
+              id="password"
+              placeholder={lang === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ' : 'Enter password'}
+              required
+              error={errors.password?.message}
+              {...register('password', VALIDATION_RULES.password)}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              size="md"
+              isLoading={isSubmitting}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+              className="mt-1 bg-primary-600 hover:bg-primary-700 text-white font-medium shadow-xs"
+            >
+              {isSubmitting 
+                ? t('verifying') 
+                : (lang === 'kn' ? 'ಖಾತೆಗೆ ಲಾಗಿನ್' : 'Sign In')}
+            </Button>
+
+            {/* Quick Fill Options for Testing */}
+            <div className="pt-3 border-t border-stone-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+              <span>{lang === 'kn' ? 'ತ್ವರಿತ ಆಯ್ಕೆ:' : 'Quick Select:'}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => quickFill('admin@example.com', 'Admin@12345')}
+                  className="text-primary-600 dark:text-amber-400 font-semibold hover:underline"
+                  title="Admin (ಮುಖ್ಯ ಆಡಳಿತಗಾರ)"
+                >
+                  Admin
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+                <button
+                  type="button"
+                  onClick={() => quickFill('editor@example.com', 'Editor@12345')}
+                  className="text-primary-600 dark:text-amber-400 font-semibold hover:underline"
+                  title="Editor (ಸಂಪಾದಕರು)"
+                >
+                  Editor
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+                <button
+                  type="button"
+                  onClick={() => quickFill('reader@example.com', 'Reader@12345')}
+                  className="text-primary-600 dark:text-amber-400 font-semibold hover:underline"
+                  title="Reader (ಓದುಗರು)"
+                >
+                  Reader
+                </button>
               </div>
-
-              <Button
-                type="button"
-                fullWidth
-                size="lg"
-                isLoading={isReaderLoading}
-                onClick={handleReaderAccess}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-kannada font-semibold text-sm shadow-sm"
-              >
-                {isReaderLoading ? 'ತೆರೆಯಲಾಗುತ್ತಿದೆ...' : 'ಕಥೆಗಳನ್ನು ಓದಲು ಪ್ರಾರಂಭಿಸಿ (Start Reading)'}
-              </Button>
-
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                ಕಥೆಗಳನ್ನು ಓದಲು, ಹುಡುಕಲು ಮತ್ತು ಸಾಹಿತಿಗಳ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಲು ತಕ್ಷಣ ಪ್ರವೇಶಿಸಿ.
-              </p>
             </div>
-          )}
-
-          {/* Tab 2: Staff / Admin Login */}
-          {activeTab === 'staff' && (
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-              <Input
-                label="ಇಮೇಲ್ ವಿಳಾಸ (Email)"
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                required
-                leftIcon={<Mail className="w-4 h-4" />}
-                error={errors.email?.message}
-                {...register('email', VALIDATION_RULES.email)}
-              />
-
-              <PasswordInput
-                label="ಪಾಸ್‌ವರ್ಡ್ (Password)"
-                id="password"
-                placeholder="ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ"
-                required
-                error={errors.password?.message}
-                {...register('password', VALIDATION_RULES.password)}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                size="md"
-                isLoading={isSubmitting}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-medium"
-              >
-                {isSubmitting ? 'ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...' : 'ಖಾತೆಗೆ ಲಾಗಿನ್ (Sign In)'}
-              </Button>
-
-              {/* Quick Fill Options for Testing */}
-              <div className="pt-3 border-t border-stone-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                <span>ತ್ವರಿತ ಆಯ್ಕೆ:</span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => quickFill('admin@example.com', 'Admin@12345')}
-                    className="text-primary-600 dark:text-amber-400 font-semibold hover:underline"
-                  >
-                    Admin
-                  </button>
-                  <span className="text-slate-300 dark:text-slate-700">&bull;</span>
-                  <button
-                    type="button"
-                    onClick={() => quickFill('reader@example.com', 'Reader@12345')}
-                    className="text-primary-600 dark:text-amber-400 font-semibold hover:underline"
-                  >
-                    Reader
-                  </button>
-                </div>
-              </div>
-            </form>
-          )}
+          </form>
 
         </div>
       </div>
 
       {/* Clean Footer */}
       <div className="w-full max-w-md mx-auto text-center text-xs text-slate-400 dark:text-slate-500 py-2">
-        <span className="font-kannada">ಕನ್ನಡ ಕಥಾ ಕೋಶ</span> &bull; <span>ಸರಳ & ಸುಲಭ ಸಾಹಿತ್ಯ ವೇದಿಕೆ</span>
+        <span className="font-kannada">{t('appName')}</span> &bull; <span>{t('appSubtitle')}</span>
       </div>
     </div>
   );

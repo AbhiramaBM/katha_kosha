@@ -8,12 +8,13 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { usersApi } from '../api';
-import { useAuth, useToast } from '../hooks';
+import { useAuth, useToast, useLanguage } from '../hooks';
 import { Modal, Button, Input, PasswordInput } from '../components/common';
 
 export default function UsersList() {
   const { isAdmin } = useAuth();
   const toast = useToast();
+  const { lang, t } = useLanguage();
 
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +41,7 @@ export default function UsersList() {
       setUsers(res.data?.data || []);
     } catch (err) {
       console.error(err);
-      toast.error('ಬಳಕೆದಾರರ ಪಟ್ಟಿ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      toast.error(lang === 'kn' ? 'ಬಳಕೆದಾರರ ಪಟ್ಟಿ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ' : 'Failed to fetch users list');
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +57,7 @@ export default function UsersList() {
     return (
       <AppLayout>
         <div className="p-12 text-center text-slate-500 font-kannada">
-          ಕೇವಲ ಮುಖ್ಯ ಆಡಳಿತಗಾರರಿಗೆ (Admin) ಮಾತ್ರ ಈ ಪುಟವನ್ನು ನೋಡಲು ಅನುಮತಿಯಿದೆ.
+          {lang === 'kn' ? 'ಕೇವಲ ಮುಖ್ಯ ಆಡಳಿತಗಾರರಿಗೆ (Admin) ಮಾತ್ರ ಈ ಪುಟವನ್ನು ನೋಡಲು ಅನುಮತಿಯಿದೆ.' : 'Only administrators are allowed to view this page.'}
         </div>
       </AppLayout>
     );
@@ -133,10 +134,10 @@ export default function UsersList() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ (Users)
+            {t('usersTitle')}
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಆಡಳಿತಗಾರರು ಹಾಗೂ ಸಂಪಾದಕರ ಖಾತೆಗಳ ನಿರ್ವಹಣೆ
+            {t('usersSubtitle')}
           </p>
         </div>
 
@@ -149,7 +150,7 @@ export default function UsersList() {
           leftIcon={<PlusCircle className="w-4 h-4" />}
           className="bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm"
         >
-          + ಹೊಸ ಸಂಪಾದಕ (Add User)
+          {t('addNewUser')}
         </Button>
       </div>
 
@@ -157,18 +158,18 @@ export default function UsersList() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="py-16 text-center text-slate-400 font-kannada text-xs">
-            ಬಳಕೆದಾರರ ಪಟ್ಟಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
+            {t('loading')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-50/70 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 font-medium text-[11px] border-b border-stone-100 dark:border-slate-800">
                 <tr>
-                  <th className="py-3 px-4 font-kannada">ಹೆಸರು (Name)</th>
-                  <th className="py-3 px-4 font-kannada">ಇಮೇಲ್ (Email)</th>
-                  <th className="py-3 px-4 font-kannada">ಪಾತ್ರ (Role)</th>
-                  <th className="py-3 px-4 font-kannada">ಸ್ಥಿತಿ (Status)</th>
-                  <th className="py-3 px-4 text-right font-kannada">ಕ್ರಮ (Actions)</th>
+                  <th className="py-3 px-4 font-kannada">{t('colUserName')}</th>
+                  <th className="py-3 px-4 font-kannada">{t('colUserEmail')}</th>
+                  <th className="py-3 px-4 font-kannada">{t('colUserRole')}</th>
+                  <th className="py-3 px-4 font-kannada">{t('colUserStatus')}</th>
+                  <th className="py-3 px-4 text-right font-kannada">{t('colUserActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-slate-800">
@@ -190,7 +191,7 @@ export default function UsersList() {
                           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                           : 'bg-stone-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}>
-                        {u.role === 'admin' ? 'ಆಡಳಿತಗಾರ (Admin)' : (u.role === 'user' ? 'ಓದುಗರು (User - Read Only)' : 'ಸಂಪಾದಕ (Editor)')}
+                        {u.role === 'admin' ? t('roleAdmin') : (u.role === 'user' ? t('roleReader') : t('roleEditor'))}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -198,7 +199,7 @@ export default function UsersList() {
                         u.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                        {u.is_active ? 'ಸಕ್ರಿಯ (Active)' : 'ನಿಷ್ಕ್ರಿಯ (Inactive)'}
+                        {u.is_active ? t('activeStatus') : t('inactiveStatus')}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -210,14 +211,14 @@ export default function UsersList() {
                             setResetModalOpen(true);
                           }}
                           className="px-2 py-1 rounded-lg border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] transition-colors"
-                          title="ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ"
+                          title={t('resetPasswordBtn')}
                         >
-                          ಪಾಸ್‌ವರ್ಡ್ ಬದಲಿಸಿ
+                          {t('resetPasswordBtn')}
                         </button>
                         <button
                           onClick={() => handleToggleStatus(u)}
                           className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                          title={u.is_active ? 'ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ' : 'ಸಕ್ರಿಯಗೊಳಿಸಿ'}
+                          title={u.is_active ? t('deactivateBtn') : t('activateBtn')}
                         >
                           <Power className="w-3.5 h-3.5" />
                         </button>
@@ -235,7 +236,7 @@ export default function UsersList() {
       <Modal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="ಹೊಸ ಬಳಕೆದಾರ ಖಾತೆ ಸೇರಿಸಿ (Create User)"
+        title={lang === 'kn' ? 'ಹೊಸ ಬಳಕೆದಾರ ಖಾತೆ ಸೇರಿಸಿ (Create User)' : 'Create New User Account'}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
@@ -247,16 +248,16 @@ export default function UsersList() {
           )}
 
           <Input
-            label="ಪೂರ್ಣ ಹೆಸರು (Full Name) *"
+            label={t('fullNameLabel')}
             id="newName"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="ಉದಾ: ರಮೇಶ್ ಕುಮಾರ್"
+            placeholder="e.g. Ramesh Kumar"
             required
           />
 
           <Input
-            label="ಇಮೇಲ್ ವಿಳಾಸ (Email) *"
+            label={t('emailLabel')}
             id="newEmail"
             type="email"
             value={newEmail}
@@ -266,26 +267,26 @@ export default function UsersList() {
           />
 
           <PasswordInput
-            label="ಆರಂಭಿಕ ಪಾಸ್‌ವರ್ಡ್ (Initial Password) *"
+            label={t('passwordLabel')}
             id="newPassword"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು"
+            placeholder="Minimum 8 characters"
             required
           />
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              ಖಾತೆಯ ಪಾತ್ರ (Role)
+              {t('colUserRole')}
             </label>
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="user">ಸಾಮಾನ್ಯ ಓದುಗರು (User - Read Stories Archive Only)</option>
-              <option value="editor">ಸಂಪಾದಕರು (Editor - Create & Edit Stories)</option>
-              <option value="admin">ಆಡಳಿತಗಾರ (Admin - Full Control)</option>
+              <option value="user">{lang === 'kn' ? 'ಸಾಮಾನ್ಯ ಓದುಗರು (User - Read Only)' : 'Reader (Read Only)'}</option>
+              <option value="editor">{lang === 'kn' ? 'ಸಂಪಾದಕರು (Editor - Create & Edit Stories)' : 'Editor (Create & Edit Stories)'}</option>
+              <option value="admin">{lang === 'kn' ? 'ಆಡಳಿತಗಾರ (Admin - Full Control)' : 'Admin (Full Control)'}</option>
             </select>
           </div>
 
@@ -296,7 +297,7 @@ export default function UsersList() {
               size="sm"
               onClick={() => setCreateModalOpen(false)}
             >
-              ರದ್ದುಮಾಡಿ
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -304,7 +305,7 @@ export default function UsersList() {
               isLoading={isCreating}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              ಖಾತೆ ರಚಿಸಿ (Create)
+              {t('save')}
             </Button>
           </div>
         </form>
@@ -314,16 +315,16 @@ export default function UsersList() {
       <Modal
         isOpen={resetModalOpen}
         onClose={() => setResetModalOpen(false)}
-        title={`ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಕೆ - ${selectedUser?.name}`}
+        title={`${t('resetPasswordBtn')} - ${selectedUser?.name}`}
         maxWidth="max-w-sm"
       >
         <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
           <PasswordInput
-            label="ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ (New Password) *"
+            label={lang === 'kn' ? 'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ (New Password) *' : 'New Password *'}
             id="resetPasswordVal"
             value={resetPasswordVal}
             onChange={(e) => setResetPasswordVal(e.target.value)}
-            placeholder="ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು"
+            placeholder="Minimum 8 characters"
             required
           />
 
@@ -334,7 +335,7 @@ export default function UsersList() {
               size="sm"
               onClick={() => setResetModalOpen(false)}
             >
-              ರದ್ದುಮಾಡಿ
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -342,7 +343,7 @@ export default function UsersList() {
               isLoading={isResetting}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              ಬದಲಾಯಿಸಿ (Save)
+              {t('save')}
             </Button>
           </div>
         </form>
