@@ -6,11 +6,8 @@ import {
   PlusCircle, 
   Trash2, 
   Edit3, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  Filter, 
-  ExternalLink 
+  X,
+  FileText
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { storiesApi, authorsApi } from '../api';
@@ -18,9 +15,9 @@ import { useAuth, useToast } from '../hooks';
 import { StoryReaderModal } from '../components/stories/StoryReaderModal';
 
 export default function StoriesList() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isReader, canEdit } = useAuth();
   const toast = useToast();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [stories, setStories] = useState([]);
   const [authors, setAuthors] = useState([]);
@@ -31,7 +28,6 @@ export default function StoriesList() {
   const [selectedAuthor, setSelectedAuthor] = useState(searchParams.get('author_id') || '');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedContentType, setSelectedContentType] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('');
 
   // Reader Modal
   const [readingStory, setReadingStory] = useState(null);
@@ -50,7 +46,6 @@ export default function StoriesList() {
       if (searchQuery) params.q = searchQuery;
       if (selectedAuthor) params.author_id = selectedAuthor;
       if (selectedStatus) params.status = selectedStatus;
-      if (selectedGenre) params.genre = selectedGenre;
 
       const res = await storiesApi.list(params);
       let list = res.data?.data || [];
@@ -68,11 +63,19 @@ export default function StoriesList() {
 
   useEffect(() => {
     loadStories();
-  }, [selectedAuthor, selectedStatus, selectedContentType, selectedGenre]);
+  }, [selectedAuthor, selectedStatus, selectedContentType]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     loadStories();
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedAuthor('');
+    setSelectedStatus('');
+    setSelectedContentType('');
+    setSearchParams({});
   };
 
   const handleDelete = async (id, title) => {
@@ -81,7 +84,7 @@ export default function StoriesList() {
       return;
     }
 
-    if (!confirm(`'${title}' ಕೃತಿಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? (Soft delete)`)) return;
+    if (!confirm(`'${title}' ಕೃತಿಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?`)) return;
 
     try {
       await storiesApi.delete(id);
@@ -94,205 +97,229 @@ export default function StoriesList() {
 
   return (
     <AppLayout>
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-kannada text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+          <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
             ಕಥಾ ಭಂಡಾರ (Stories Archive)
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಸಂಗ್ರಹದಲ್ಲಿರುವ ಎಲ್ಲಾ ಕಥೆಗಳು, ಕಾದಂಬರಿಗಳು, ಹಸ್ತಪ್ರತಿಗಳು ಹಾಗೂ ಸಾಹಿತ್ಯಿಕ ವಿಮರ್ಶೆಗಳ ಸಮಗ್ರ ಪಟ್ಟಿ.
+            ಕನ್ನಡ ಸಾಹಿತ್ಯದ ಕಥೆಗಳು, ಕಾದಂಬರಿಗಳು ಹಾಗೂ ಹಸ್ತಪ್ರತಿಗಳ ಸಂಗ್ರಹ
           </p>
         </div>
 
-        <Link
-          to="/stories/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-700 text-white font-kannada text-xs font-semibold shadow-md transition-colors shrink-0"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ ಹೊಸ ಕಥೆ ಸೇರಿಸಿ (New Story)</span>
-        </Link>
+        {canEdit && (
+          <Link
+            to="/stories/new"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm transition-colors shrink-0"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>+ ಹೊಸ ಕಥೆ (New Story)</span>
+          </Link>
+        )}
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm mb-6 flex flex-col gap-4">
-        {/* Search Input Row */}
+      {/* Simplified, Clean Filter Bar */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm mb-6 flex flex-col gap-3">
+        {/* Search Row */}
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="ಕಥೆಯ ಶೀರ್ಷಿಕೆ ಅಥವಾ ವಿವರಣೆಯ ಮೂಲಕ ಹುಡುಕಿ... (Search stories)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+              placeholder="ಕಥೆಯ ಶೀರ್ಷಿಕೆ ಅಥವಾ ವಿವರ ಹುಡುಕಿ... (Search stories)"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50/50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm transition-colors"
+            className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium transition-colors"
           >
-            ಹುಡುಕಿ
+            ಹುಡುಕಿ (Search)
           </button>
         </form>
 
-        {/* Filter Dropdowns */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          {/* Author Select */}
-          <select
-            value={selectedAuthor}
-            onChange={(e) => setSelectedAuthor(e.target.value)}
-            className="p-2 rounded-xl bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="">ಎಲ್ಲಾ ಲೇಖಕರು (All Authors)</option>
-            {authors.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name_kn || a.name_en}
-              </option>
-            ))}
-          </select>
+        {/* Filter Chips & Dropdowns */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-100 dark:border-slate-800 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Pills */}
+            <div className="flex items-center bg-stone-100 dark:bg-slate-800 p-0.5 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setSelectedStatus('')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  selectedStatus === ''
+                    ? 'bg-white dark:bg-slate-900 text-primary-600 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                ಎಲ್ಲವೂ (All)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedStatus('published')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  selectedStatus === 'published'
+                    ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                ಪ್ರಕಟಿತ
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus('draft')}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    selectedStatus === 'draft'
+                      ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  ಕರಡು
+                </button>
+              )}
+            </div>
 
-          {/* Status Select */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="p-2 rounded-xl bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="">ಎಲ್ಲಾ ಸ್ಥಿತಿಗಳು (All Status)</option>
-            <option value="published">ಪ್ರಕಟಿತ (Published)</option>
-            <option value="draft">ಕರಡು (Draft)</option>
-          </select>
+            {/* Author Dropdown */}
+            <select
+              value={selectedAuthor}
+              onChange={(e) => {
+                setSelectedAuthor(e.target.value);
+                setSearchParams(e.target.value ? { author_id: e.target.value } : {});
+              }}
+              className="py-1 px-2.5 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">ಎಲ್ಲಾ ಸಾಹಿತಿಗಳು (All Authors)</option>
+              {authors.map(a => (
+                <option key={a.id} value={a.id}>{a.name_kn}</option>
+              ))}
+            </select>
 
-          {/* Format Select */}
-          <select
-            value={selectedContentType}
-            onChange={(e) => setSelectedContentType(e.target.value)}
-            className="p-2 rounded-xl bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="">ಎಲ್ಲಾ ರೂಪಗಳು (All Formats)</option>
-            <option value="text">ಯುನಿಕೋಡ್ ಪಠ್ಯ (Text)</option>
-            <option value="pdf">ಪಿಡಿಎಫ್ / ಹಸ್ತಪ್ರತಿ (PDF)</option>
-          </select>
+            {/* Format Dropdown */}
+            <select
+              value={selectedContentType}
+              onChange={(e) => setSelectedContentType(e.target.value)}
+              className="py-1 px-2.5 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">ಎಲ್ಲಾ ರೂಪಗಳು (All Formats)</option>
+              <option value="text">ಯುನಿಕೋಡ್ ಪಠ್ಯ (Text)</option>
+              <option value="pdf">ಪಿಡಿಎಫ್ (PDF)</option>
+            </select>
+          </div>
 
-          {/* Genre Select */}
-          <select
-            value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="p-2 rounded-xl bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="">ಎಲ್ಲಾ ಪ್ರಕಾರಗಳು (All Genres)</option>
-            <option value="ಕಾದಂಬರಿ">ಕಾದಂಬರಿ (Novel)</option>
-            <option value="ಸಣ್ಣ ಕಥೆ">ಸಣ್ಣ ಕಥೆ (Short Story)</option>
-            <option value="ಮಹಾಕಾವ್ಯ">ಮಹಾಕಾವ್ಯ (Epic)</option>
-            <option value="ಕಾವ್ಯ">ಕಾವ್ಯ (Poetry)</option>
-          </select>
+          {(searchQuery || selectedAuthor || selectedStatus || selectedContentType) && (
+            <button
+              onClick={clearFilters}
+              className="text-[11px] text-slate-500 hover:text-rose-600 flex items-center gap-1"
+            >
+              <X className="w-3 h-3" />
+              <span>ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ (Clear)</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Stories Master Table */}
+      {/* Stories Content */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-stone-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px] border-b border-stone-200/80 dark:border-slate-700">
-              <tr>
-                <th className="py-3.5 px-4">ಶೀರ್ಷಿಕೆ (Title)</th>
-                <th className="py-3.5 px-4">ಸಾಹಿತಿ (Author)</th>
-                <th className="py-3.5 px-4">ಪ್ರಕಾರ (Genre)</th>
-                <th className="py-3.5 px-4">ರೂಪ (Format)</th>
-                <th className="py-3.5 px-4">ಪ್ರಕಟಣೆ (Year)</th>
-                <th className="py-3.5 px-4">ಸ್ಥಿತಿ (Status)</th>
-                <th className="py-3.5 px-4 text-right">ಕ್ರಮಗಳು (Actions)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100 dark:divide-slate-800">
-              {isLoading ? (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-400">
-                    ದತ್ತಾಂಶ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
-                  </td>
-                </tr>
-              ) : stories.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-400">
-                    ಯಾವುದೇ ಕೃತಿಗಳು ಸಿಗಲಿಲ್ಲ (No stories found)
-                  </td>
-                </tr>
-              ) : (
-                stories.map((story) => (
-                  <tr key={story.id} className="hover:bg-stone-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <button
-                        onClick={() => setReadingStory(story)}
-                        className="font-kannada font-bold text-sm text-slate-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-gold-400 transition-colors text-left block"
+        {isLoading ? (
+          <div className="py-16 text-center text-slate-400 font-kannada text-xs">
+            ಕಥೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...
+          </div>
+        ) : stories.length === 0 ? (
+          <div className="py-16 px-4 text-center">
+            <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <h3 className="font-kannada font-bold text-sm text-slate-800 dark:text-slate-200">
+              ಯಾವುದೇ ಕಥೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ
+            </h3>
+            <p className="font-kannada text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              ಹುಡುಕಾಟದ ಪದವನ್ನು ಬದಲಾಯಿಸಿ ಅಥವಾ ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-stone-100 dark:divide-slate-800">
+            {stories.map((story) => (
+              <div
+                key={story.id}
+                className="p-4 sm:p-5 hover:bg-stone-50/50 dark:hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                {/* Story details */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <button
+                      onClick={() => setReadingStory(story)}
+                      className="font-kannada font-bold text-sm sm:text-base text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-amber-400 transition-colors text-left"
+                    >
+                      {story.title_kn}
+                    </button>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      {story.content_type === 'pdf' ? '📄 PDF' : '📝 ಪಠ್ಯ'}
+                    </span>
+                    {story.status === 'draft' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 font-medium">
+                        ಕರಡು
+                      </span>
+                    )}
+                  </div>
+
+                  {story.title_en && (
+                    <p className="text-xs text-slate-400 mb-1">{story.title_en}</p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-kannada">
+                    <span>ಸಾಹಿತಿ: <strong className="text-slate-700 dark:text-slate-200">{story.author?.name_kn || 'ಅಜ್ಞಾತ'}</strong></span>
+                    {story.genre && (
+                      <>
+                        <span>&bull;</span>
+                        <span>{story.genre}</span>
+                      </>
+                    )}
+                    {story.published_year && (
+                      <>
+                        <span>&bull;</span>
+                        <span>{story.published_year}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Story Actions */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setReadingStory(story)}
+                    className="px-3.5 py-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-xs transition-colors"
+                  >
+                    ಓದಿ (Read)
+                  </button>
+
+                  {canEdit && (
+                    <>
+                      <Link
+                        to={`/stories/${story.id}/edit`}
+                        className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
+                        title="ತಿದ್ದಿ (Edit)"
                       >
-                        {story.title_kn}
-                      </button>
-                      {story.title_en && (
-                        <span className="text-[11px] text-slate-400 block mt-0.5">{story.title_en}</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 font-kannada font-medium text-slate-700 dark:text-slate-300">
-                      {story.author?.name_kn || story.author?.name_en || 'ಅಜ್ಞಾತ ಲೇಖಕರು'}
-                    </td>
-                    <td className="py-3.5 px-4 font-kannada text-slate-500">
-                      {story.genre || 'ಸಾಹಿತ್ಯ'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                        story.content_type === 'pdf'
-                          ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
-                          : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
-                      }`}>
-                        {story.content_type === 'pdf' ? '📄 PDF' : '📝 ಯುನಿಕೋಡ್'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500">
-                      {story.published_year || '—'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        story.status === 'published'
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
-                      }`}>
-                        {story.status === 'published' ? 'ಪ್ರಕಟಿತ' : 'ಕರಡು'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </Link>
+
+                      {isAdmin && (
                         <button
-                          onClick={() => setReadingStory(story)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
-                          title="ಕಥೆ ಓದಿ (Read story)"
+                          onClick={() => handleDelete(story.id, story.title_kn)}
+                          className="p-1.5 rounded-lg border border-stone-200 dark:border-slate-700 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                          title="ಅಳಿಸಿ (Delete)"
                         >
-                          ಓದಿ
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-
-                        <Link
-                          to={`/stories/${story.id}/edit`}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-                          title="ತಿದ್ದಿ (Edit story)"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </Link>
-
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDelete(story.id, story.title_kn)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                            title="ಅಳಿಸಿ (Soft delete)"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Reader Modal */}

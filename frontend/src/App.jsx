@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute, PublicRoute } from './routes/RouteGuards';
+import { ProtectedRoute, PublicRoute, StaffRoute, AdminRoute } from './routes/RouteGuards';
 
 // Pages
 import Login from './pages/Login';
@@ -45,21 +45,22 @@ export default function App() {
         }
       />
 
+      {/* Staff Only Routes (Admin & Editor) */}
       <Route
         path="/stories/new"
         element={
-          <ProtectedRoute>
+          <StaffRoute>
             <StoryEditor />
-          </ProtectedRoute>
+          </StaffRoute>
         }
       />
 
       <Route
         path="/stories/:id/edit"
         element={
-          <ProtectedRoute>
+          <StaffRoute>
             <StoryEditor />
-          </ProtectedRoute>
+          </StaffRoute>
         }
       />
 
@@ -72,12 +73,13 @@ export default function App() {
         }
       />
 
+      {/* Admin Only Route */}
       <Route
         path="/users"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <UsersList />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
 

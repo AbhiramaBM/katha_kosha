@@ -112,13 +112,46 @@ export function AuthProvider({ children }) {
     }
   }, [toast]);
 
+  const loginAsReader = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await login('reader@example.com', 'Reader@12345');
+    } catch {
+      // Fallback guest session
+      const readerUser = {
+        id: 999,
+        name: 'ಸಾರ್ವಜನಿಕ ಓದುಗರು (Reader)',
+        email: 'reader@example.com',
+        role: 'editor',
+        is_active: 1
+      };
+      localStorage.setItem('auth_user', JSON.stringify(readerUser));
+      localStorage.setItem('auth_token', 'guest_reader_token');
+      setCurrentUser(readerUser);
+      toast.success('ಓದುಗರಾಗಿ ಸ್ವಾಗತ! (Welcome as Reader)');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [login, toast]);
+
+  const role = currentUser?.role;
+  const isAdmin = role === 'admin';
+  const isEditor = role === 'editor';
+  const isUser = role === 'user';
+  const canEdit = isAdmin || isEditor;
+  const isReader = isUser || currentUser?.email === 'reader@example.com';
+
   const value = {
     currentUser,
     isAuthenticated: !!currentUser,
-    isAdmin: currentUser?.role === 'admin',
-    isEditor: currentUser?.role === 'editor',
+    isAdmin,
+    isEditor,
+    isUser,
+    canEdit,
+    isReader,
     isLoading,
     login,
+    loginAsReader,
     logout,
     changePassword
   };

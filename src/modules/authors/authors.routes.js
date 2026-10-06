@@ -16,11 +16,12 @@ const router = Router();
 // Authentication required for all author routes
 router.use(authenticate);
 
-router.post('/', validate(createAuthorSchema), authorsController.createAuthor);
+// Only admin and editor can create or modify authors
+router.post('/', requireRole('admin', 'editor'), validate(createAuthorSchema), authorsController.createAuthor);
 router.get('/', validate(listAuthorsSchema), authorsController.listAuthors);
 router.get('/:id', validate(authorIdParamSchema), authorsController.getAuthor);
-router.patch('/:id', validate(updateAuthorSchema), authorsController.updateAuthor);
-router.post('/:id/photo', validate(authorIdParamSchema), uploadAuthorPhoto, authorsController.uploadPhoto);
+router.patch('/:id', requireRole('admin', 'editor'), validate(updateAuthorSchema), authorsController.updateAuthor);
+router.post('/:id/photo', requireRole('admin', 'editor'), validate(authorIdParamSchema), uploadAuthorPhoto, authorsController.uploadPhoto);
 router.get('/:id/stories', validate(authorIdParamSchema), authorsController.getStories);
 
 // Soft delete: Admin only!

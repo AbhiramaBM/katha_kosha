@@ -4,3 +4,5 @@ export { PasswordInput } from './PasswordInput';
 export { Modal } from './Modal';
 export { Toast, ToastContainer } from './Toast';
 export { LoadingSpinner } from './LoadingSpinner';
+export { KannadaInput } from './KannadaInput';
+

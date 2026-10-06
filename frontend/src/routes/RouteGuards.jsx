@@ -33,3 +33,41 @@ export function PublicRoute({ children }) {
 
   return children;
 }
+
+export function StaffRoute({ children }) {
+  const { isAuthenticated, isLoading, canEdit } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <AuthLoading />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!canEdit) {
+    return <Navigate to="/stories" replace />;
+  }
+
+  return children;
+}
+
+export function AdminRoute({ children }) {
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <AuthLoading />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}

@@ -16,11 +16,12 @@ const router = Router();
 // Authentication required for all story routes
 router.use(authenticate);
 
-router.post('/', uploadStoryPdf, validate(createStorySchema), storiesController.createStory);
+// Only admin and editor can create or modify stories
+router.post('/', requireRole('admin', 'editor'), uploadStoryPdf, validate(createStorySchema), storiesController.createStory);
 router.get('/', validate(listStoriesSchema), storiesController.listStories);
 router.get('/:id', validate(storyIdParamSchema), storiesController.getStory);
-router.patch('/:id', uploadStoryPdf, validate(updateStorySchema), storiesController.updateStory);
-router.put('/:id/pdf', validate(storyIdParamSchema), uploadStoryPdf, storiesController.replacePdf);
+router.patch('/:id', requireRole('admin', 'editor'), uploadStoryPdf, validate(updateStorySchema), storiesController.updateStory);
+router.put('/:id/pdf', requireRole('admin', 'editor'), validate(storyIdParamSchema), uploadStoryPdf, storiesController.replacePdf);
 
 // Soft delete: Admin only!
 router.delete('/:id', requireRole('admin'), validate(storyIdParamSchema), storiesController.deleteStory);

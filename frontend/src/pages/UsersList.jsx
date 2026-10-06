@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   UserCheck, 
   PlusCircle, 
-  Lock, 
-  Shield, 
+  Key, 
   Power, 
-  Mail, 
   AlertCircle 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -57,8 +55,8 @@ export default function UsersList() {
   if (!isAdmin) {
     return (
       <AppLayout>
-        <div className="p-8 text-center text-slate-500">
-          ಕೇವಲ ಮುಖ್ಯ ಆಡಳಿತಗಾರರಿಗೆ (Admin) ಮಾತ್ರ ಈ ಪುಟವನ್ನು ನೋಡಲು ಅನುಮತಿಯಿದೆ (403 Forbidden).
+        <div className="p-12 text-center text-slate-500 font-kannada">
+          ಕೇವಲ ಮುಖ್ಯ ಆಡಳಿತಗಾರರಿಗೆ (Admin) ಮಾತ್ರ ಈ ಪುಟವನ್ನು ನೋಡಲು ಅನುಮತಿಯಿದೆ.
         </div>
       </AppLayout>
     );
@@ -77,54 +75,53 @@ export default function UsersList() {
     try {
       await usersApi.create({
         name: newName.trim(),
-        email: newEmail.trim(),
+        email: newEmail.trim().toLowerCase(),
         password: newPassword,
         role: newRole
       });
-      toast.success(`'${newName}' ಸಂಪಾದಕರ ಖಾತೆಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ`);
+      toast.success('ಹೊಸ ಬಳಕೆದಾರರನ್ನು ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ');
       setCreateModalOpen(false);
       setNewName('');
       setNewEmail('');
       setNewPassword('');
       loadUsers();
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.message || 'ಖಾತೆ ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
-      setCreateError(msg);
-      toast.error(msg);
+      setCreateError(err.response?.data?.error?.message || 'ಬಳಕೆದಾರರನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleToggleActive = async (user) => {
+  const handleToggleStatus = async (user) => {
     const nextStatus = user.is_active ? 0 : 1;
-    const actionName = nextStatus ? 'ಸಕ್ರಿಯಗೊಳಿಸಲು' : 'ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲು';
-    if (!confirm(`'${user.name}' ಅವರ ಖಾತೆಯನ್ನು ${actionName} ಖಚಿತವೇ?`)) return;
+    const actionLabel = nextStatus ? 'ಸಕ್ರಿಯಗೊಳಿಸಲು' : 'ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲು';
+
+    if (!confirm(`'${user.name}' ಖಾತೆಯನ್ನು ${actionLabel} ನೀವು ಖಚಿತವೇ?`)) return;
 
     try {
       await usersApi.update(user.id, { is_active: nextStatus });
-      toast.success(`ಖಾತೆಯ ಸ್ಥಿತಿ ಬದಲಾಗಿದೆ`);
+      toast.success('ಖಾತೆಯ ಸ್ಥಿತಿ ಬದಲಾಗಿದೆ');
       loadUsers();
     } catch (err) {
-      toast.error('ಸ್ಥಿತಿ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
+      toast.error(err.response?.data?.error?.message || 'ಸ್ಥಿತಿ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
     }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (resetPasswordVal.length < 8) {
-      toast.warning('ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ ೮ ಅಕ್ಷರ ಹೊಂದಿರಬೇಕು');
+    if (!resetPasswordVal || resetPasswordVal.length < 8) {
+      toast.error('ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ ೮ ಅಕ್ಷರಗಳನ್ನು ಹೊಂದಿರಬೇಕು');
       return;
     }
 
     setIsResetting(true);
     try {
       await usersApi.resetPassword(selectedUser.id, resetPasswordVal);
-      toast.success(`'${selectedUser.name}' ಅವರಿಗೆ ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಲಾಗಿದೆ`);
+      toast.success(`'${selectedUser.name}' ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಲಾಗಿದೆ`);
       setResetModalOpen(false);
       setResetPasswordVal('');
     } catch (err) {
-      toast.error('ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಲು ವಿಫಲವಾಗಿದೆ');
+      toast.error(err.response?.data?.error?.message || 'ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
     } finally {
       setIsResetting(false);
     }
@@ -135,184 +132,179 @@ export default function UsersList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-kannada text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-            ಸಂಪಾದಕರ ಮತ್ತು ಸಿಬ್ಬಂದಿ ನಿರ್ವಹಣೆ (User Management)
+          <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ (Users)
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಕಥಾ ಕೋಶದ ಸಂಪಾದಕೀಯ ಸಿಬ್ಬಂದಿ ಖಾತೆಗಳನ್ನು ರಚಿಸಿ, ನಿರ್ವಹಿಸಿ ಮತ್ತು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ.
+            ಆಡಳಿತಗಾರರು ಹಾಗೂ ಸಂಪಾದಕರ ಖಾತೆಗಳ ನಿರ್ವಹಣೆ
           </p>
         </div>
 
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-700 text-white font-kannada text-xs font-semibold shadow-md transition-colors shrink-0"
+        <Button
+          onClick={() => {
+            setCreateError('');
+            setCreateModalOpen(true);
+          }}
+          size="md"
+          leftIcon={<PlusCircle className="w-4 h-4" />}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm"
         >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ ಹೊಸ ಸಂಪಾದಕರು (Add Editor)</span>
-        </button>
+          + ಹೊಸ ಸಂಪಾದಕ (Add User)
+        </Button>
       </div>
 
       {/* Users Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-stone-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px] border-b border-stone-200/80 dark:border-slate-700">
-              <tr>
-                <th className="py-3.5 px-4">ಹೆಸರು (Name)</th>
-                <th className="py-3.5 px-4">ಇಮೇಲ್ (Email)</th>
-                <th className="py-3.5 px-4">ಪಾತ್ರ (Role)</th>
-                <th className="py-3.5 px-4">ಸ್ಥಿತಿ (Status)</th>
-                <th className="py-3.5 px-4">ಕೊನೆಯ ಲಾಗಿನ್ (Last Login)</th>
-                <th className="py-3.5 px-4 text-right">ಕ್ರಮಗಳು (Actions)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100 dark:divide-slate-800">
-              {isLoading ? (
+        {isLoading ? (
+          <div className="py-16 text-center text-slate-400 font-kannada text-xs">
+            ಬಳಕೆದಾರರ ಪಟ್ಟಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-stone-50/70 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 font-medium text-[11px] border-b border-stone-100 dark:border-slate-800">
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-slate-400">
-                    ದತ್ತಾಂಶ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
-                  </td>
+                  <th className="py-3 px-4 font-kannada">ಹೆಸರು (Name)</th>
+                  <th className="py-3 px-4 font-kannada">ಇಮೇಲ್ (Email)</th>
+                  <th className="py-3 px-4 font-kannada">ಪಾತ್ರ (Role)</th>
+                  <th className="py-3 px-4 font-kannada">ಸ್ಥಿತಿ (Status)</th>
+                  <th className="py-3 px-4 text-right font-kannada">ಕ್ರಮ (Actions)</th>
                 </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-slate-400">
-                    ಯಾವುದೇ ಬಳಕೆದಾರರು ಸಿಗಲಿಲ್ಲ
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
-                      {user.name}
+              </thead>
+              <tbody className="divide-y divide-stone-100 dark:divide-slate-800">
+                {users.map((u) => (
+                  <tr key={u.id} className="hover:bg-stone-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-slate-900 dark:text-white block">
+                        {u.name}
+                      </span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
-                      {user.email}
+                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+                      {u.email}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                        user.role === 'admin'
-                          ? 'bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-gold-400 border border-primary-200 dark:border-slate-700'
-                          : 'bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${
+                        u.role === 'admin'
+                          ? 'bg-primary-50 text-primary-700 dark:bg-slate-800 dark:text-amber-400'
+                          : u.role === 'user'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                          : 'bg-stone-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}>
-                        {user.role}
+                        {u.role === 'admin' ? 'ಆಡಳಿತಗಾರ (Admin)' : (u.role === 'user' ? 'ಓದುಗರು (User - Read Only)' : 'ಸಂಪಾದಕ (Editor)')}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        user.is_active
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${
+                        u.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
                       }`}>
-                        {user.is_active ? 'ಸಕ್ರಿಯ (Active)' : 'ನಿಷ್ಕ್ರಿಯ (Disabled)'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        {u.is_active ? 'ಸಕ್ರಿಯ (Active)' : 'ನಿಷ್ಕ್ರಿಯ (Inactive)'}
                       </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500">
-                      {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'ಲಾಗಿನ್ ಆಗಿಲ್ಲ'}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Toggle active button */}
-                        <button
-                          onClick={() => handleToggleActive(user)}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            user.is_active
-                              ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                              : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                          title={user.is_active ? 'ಖಾತೆ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ (Disable)' : 'ಖಾತೆ ಸಕ್ರಿಯಗೊಳಿಸಿ (Enable)'}
-                        >
-                          <Power className="w-4 h-4" />
-                        </button>
-
-                        {/* Reset password button */}
                         <button
                           onClick={() => {
-                            setSelectedUser(user);
+                            setSelectedUser(u);
                             setResetPasswordVal('');
                             setResetModalOpen(true);
                           }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-stone-100 transition-colors"
-                          title="ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ (Reset password)"
+                          className="px-2 py-1 rounded-lg border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] transition-colors"
+                          title="ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ"
                         >
-                          <Lock className="w-4 h-4" />
+                          ಪಾಸ್‌ವರ್ಡ್ ಬದಲಿಸಿ
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                          title={u.is_active ? 'ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ' : 'ಸಕ್ರಿಯಗೊಳಿಸಿ'}
+                        >
+                          <Power className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Create User Modal */}
       <Modal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="ಹೊಸ ಸಂಪಾದಕರ ಸೇರ್ಪಡೆ (Create User Account)"
+        title="ಹೊಸ ಬಳಕೆದಾರ ಖಾತೆ ಸೇರಿಸಿ (Create User)"
+        maxWidth="max-w-md"
       >
         <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
           {createError && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-xs text-rose-600">
-              {createError}
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+              <span>{createError}</span>
             </div>
           )}
 
           <Input
-            label="ಪೂರ್ಣ ಹೆಸರು (Full Name)"
-            id="user-name"
-            placeholder="ಉದಾ: ವೀಣಾ ಶಾಸ್ತ್ರಿ"
+            label="ಪೂರ್ಣ ಹೆಸರು (Full Name) *"
+            id="newName"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            placeholder="ಉದಾ: ರಮೇಶ್ ಕುಮಾರ್"
             required
           />
 
           <Input
-            label="ಇಮೇಲ್ ವಿಳಾಸ (Email)"
-            id="user-email"
+            label="ಇಮೇಲ್ ವಿಳಾಸ (Email) *"
+            id="newEmail"
             type="email"
-            placeholder="editor@katha-kosha.org"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="editor@example.com"
             required
           />
 
           <PasswordInput
-            label="ಆರಂಭಿಕ ಪಾಸ್‌ವರ್ಡ್ (Initial Password)"
-            id="user-password"
-            placeholder="ಕನಿಷ್ಠ ೮ ಅಕ್ಷರಗಳು"
+            label="ಆರಂಭಿಕ ಪಾಸ್‌ವರ್ಡ್ (Initial Password) *"
+            id="newPassword"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು"
             required
           />
 
           <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-              ಪಾತ್ರ (Role)
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+              ಖಾತೆಯ ಪಾತ್ರ (Role)
             </label>
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full p-2.5 rounded-xl text-xs bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none"
+              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="editor">Editor (ಸಂಪಾದಕರು - ಕಥೆ/ಸಾಹಿತಿ ರಚನೆ)</option>
-              <option value="admin">Admin (ಮುಖ್ಯ ಆಡಳಿತಗಾರರು - ಪೂರ್ಣ ನಿಯಂತ್ರಣ)</option>
+              <option value="user">ಸಾಮಾನ್ಯ ಓದುಗರು (User - Read Stories Archive Only)</option>
+              <option value="editor">ಸಂಪಾದಕರು (Editor - Create & Edit Stories)</option>
+              <option value="admin">ಆಡಳಿತಗಾರ (Admin - Full Control)</option>
             </select>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 mt-2">
-            <Button variant="outline" size="sm" onClick={() => setCreateModalOpen(false)}>
-              ರದ್ದು
+          <div className="flex justify-end gap-2 pt-3 border-t border-stone-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreateModalOpen(false)}
+            >
+              ರದ್ದುಮಾಡಿ
             </Button>
             <Button
               type="submit"
-              variant="primary"
               size="sm"
               isLoading={isCreating}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              {isCreating ? 'ರಚಿಸಲಾಗುತ್ತಿದೆ...' : 'ಖಾತೆ ರಚಿಸಿ (Create Account)'}
+              ಖಾತೆ ರಚಿಸಿ (Create)
             </Button>
           </div>
         </form>
@@ -322,30 +314,35 @@ export default function UsersList() {
       <Modal
         isOpen={resetModalOpen}
         onClose={() => setResetModalOpen(false)}
-        title={`ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಕೆ: ${selectedUser?.name}`}
+        title={`ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಕೆ - ${selectedUser?.name}`}
+        maxWidth="max-w-sm"
       >
         <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
           <PasswordInput
-            label="ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ (New Password)"
-            id="reset-pass"
-            placeholder="ಕನಿಷ್ಠ ೮ ಅಕ್ಷರಗಳು (1 number, 1 letter)"
+            label="ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ (New Password) *"
+            id="resetPasswordVal"
             value={resetPasswordVal}
             onChange={(e) => setResetPasswordVal(e.target.value)}
+            placeholder="ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು"
             required
           />
 
-          <div className="flex items-center justify-end gap-2.5 mt-2">
-            <Button variant="outline" size="sm" onClick={() => setResetModalOpen(false)}>
-              ರದ್ದು
+          <div className="flex justify-end gap-2 pt-3 border-t border-stone-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setResetModalOpen(false)}
+            >
+              ರದ್ದುಮಾಡಿ
             </Button>
             <Button
               type="submit"
-              variant="primary"
               size="sm"
               isLoading={isResetting}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              {isResetting ? 'ಬದಲಾಯಿಸಲಾಗುತ್ತಿದೆ...' : 'ಪಾಸ್‌ವರ್ಡ್ ಉಳಿಸಿ'}
+              ಬದಲಾಯಿಸಿ (Save)
             </Button>
           </div>
         </form>

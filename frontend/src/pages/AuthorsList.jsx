@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Users, 
   Search, 
   PlusCircle, 
   Trash2, 
   Edit3, 
-  Camera, 
   BookOpen, 
-  Calendar, 
   MapPin, 
+  Calendar,
   AlertCircle 
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { authorsApi } from '../api';
+import { authorsApi, storiesApi } from '../api';
 import { useAuth, useToast } from '../hooks';
-import { Modal, Button, Input } from '../components/common';
+import { Modal, Button, Input, KannadaInput } from '../components/common';
 
 export default function AuthorsList() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isReader, canEdit } = useAuth();
   const toast = useToast();
-  const navigate = useNavigate();
 
   const [authors, setAuthors] = useState([]);
+  const [stories, setStories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,15 +38,16 @@ export default function AuthorsList() {
   const [deathYear, setDeathYear] = useState('');
   const [place, setPlace] = useState('');
   const [bio, setBio] = useState('');
-  const [photoFile, setPhotoFile] = useState(null);
 
-  const loadAuthors = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const params = { limit: 100 };
-      if (searchQuery) params.q = searchQuery;
-      const res = await authorsApi.list(params);
-      setAuthors(res.data?.data || []);
+      const [authorsRes, storiesRes] = await Promise.all([
+        authorsApi.list({ limit: 100, ...(searchQuery ? { q: searchQuery } : {}) }),
+        storiesApi.list({ limit: 100 })
+      ]);
+      setAuthors(authorsRes.data?.data || []);
+      setStories(storiesRes.data?.data || []);
     } catch (err) {
       console.error('Failed to load authors:', err);
       toast.error('ಸಾಹಿತಿಗಳ ಪಟ್ಟಿ ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
@@ -57,7 +57,7 @@ export default function AuthorsList() {
   };
 
   useEffect(() => {
-    loadAuthors();
+    loadData();
   }, [searchQuery]);
 
   const openCreateModal = () => {
@@ -68,7 +68,6 @@ export default function AuthorsList() {
     setDeathYear('');
     setPlace('');
     setBio('');
-    setPhotoFile(null);
     setModalError('');
     setModalOpen(true);
   };
@@ -81,7 +80,6 @@ export default function AuthorsList() {
     setDeathYear(author.death_year ? String(author.death_year) : '');
     setPlace(author.place || '');
     setBio(author.bio || '');
-    setPhotoFile(null);
     setModalError('');
     setModalOpen(true);
   };
@@ -98,41 +96,26 @@ export default function AuthorsList() {
     const payload = {
       name_kn: nameKn.trim(),
       name_en: nameEn.trim() || null,
-      birth_year: birthYear ? parseInt(birthYear) : null,
-      death_year: deathYear ? parseInt(deathYear) : null,
+      birth_year: birthYear ? parseInt(birthYear, 10) : null,
+      death_year: deathYear ? parseInt(deathYear, 10) : null,
       place: place.trim() || null,
       bio: bio.trim() || null
     };
 
     setIsSubmitting(true);
     try {
-      let savedAuthor;
       if (editingAuthor) {
-        const res = await authorsApi.update(editingAuthor.id, payload);
-        savedAuthor = res.data?.data || res.data;
-        toast.success(`'${nameKn}' ಅವರ ವಿವರ ನವೀಕರಿಸಲಾಗಿದೆ`);
+        await authorsApi.update(editingAuthor.id, payload);
+        toast.success('ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ');
       } else {
-        const res = await authorsApi.create(payload);
-        savedAuthor = res.data?.data || res.data;
-        toast.success(`'${nameKn}' ಅವರನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ`);
+        await authorsApi.create(payload);
+        toast.success('ಹೊಸ ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ');
       }
-
-      // If photo attached, upload photo
-      if (photoFile && savedAuthor?.id) {
-        try {
-          await authorsApi.uploadPhoto(savedAuthor.id, photoFile);
-          toast.success('ಸಾಹಿತಿಗಳ ಭಾವಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಆಗಿದೆ');
-        } catch {
-          toast.warning('ಭಾವಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
-        }
-      }
-
       setModalOpen(false);
-      loadAuthors();
+      loadData();
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.message || 'ಸಾಹಿತಿ ವಿವರ ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ';
-      setModalError(msg);
-      toast.error(msg);
+      console.error(err);
+      setModalError(err.response?.data?.error?.message || 'ಸಾಹಿತಿ ವಿವರ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
     } finally {
       setIsSubmitting(false);
     }
@@ -144,244 +127,261 @@ export default function AuthorsList() {
       return;
     }
 
-    if (!confirm(`'${author.name_kn}' ಅವರ ವಿವರವನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? (Soft delete)`)) return;
+    if (!confirm(`'${author.name_kn}' ಸಾಹಿತಿಯ ವಿವರಗಳನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ?`)) return;
 
     try {
       await authorsApi.delete(author.id);
-      toast.success(`'${author.name_kn}' ಅವರ ವಿವರವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ`);
-      loadAuthors();
+      toast.success('ಸಾಹಿತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ');
+      loadData();
     } catch (err) {
-      // Rule 6: author cannot be deleted if has stories (409 Conflict)
-      const msg = err.response?.data?.error?.message || 'ಈ ಲೇಖಕರಿಗೆ ಕೃತಿಗಳು ಇರುವುದರಿಂದ ಅಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ (409 Conflict)';
-      toast.error(msg);
+      toast.error(err.response?.data?.error?.message || 'ಸಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
     }
   };
 
   return (
     <AppLayout>
-      {/* Page Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-kannada text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-            ಸಾಹಿತಿಗಳ ಪರಿಚಯ ಕೋಶ (Authors Directory)
+          <h1 className="font-kannada text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            ಸಾಹಿತಿಗಳು (Authors Directory)
           </h1>
           <p className="font-kannada text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ಕನ್ನಡ ಸಾಹಿತ್ಯ ಲೋಕದ ಪ್ರಮುಖ ಕಥೆಗಾರರು, ಕಾದಂಬರಿಕಾರರು ಮತ್ತು ಮಹಾಕವಿಗಳ ಸಮಗ್ರ ವಿವರ.
+            ಕನ್ನಡ ಸಾಹಿತ್ಯ ಲೋಕದ ಪ್ರಮುಖ ಕವಿಗಳು, ಕಾದಂಬರಿಕಾರರು ಹಾಗೂ ಕಥೆಗಾರರು
           </p>
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-700 text-white font-kannada text-xs font-semibold shadow-md transition-colors shrink-0"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ ಹೊಸ ಸಾಹಿತಿ ಸೇರಿಸಿ (Add Author)</span>
-        </button>
+        {canEdit && (
+          <Button
+            onClick={openCreateModal}
+            size="md"
+            leftIcon={<PlusCircle className="w-4 h-4" />}
+            className="bg-primary-600 hover:bg-primary-700 text-white font-kannada text-xs font-semibold shadow-sm"
+          >
+            + ಹೊಸ ಸಾಹಿತಿ ಸೇರಿಸಿ (Add Author)
+          </Button>
+        )}
       </div>
 
-      {/* Search Input */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm mb-6 flex items-center gap-3">
-        <Search className="w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="ಸಾಹಿತಿಯ ಕನ್ನಡ ಅಥವಾ ಇಂಗ್ಲಿಷ್ ಹೆಸರಿನ ಮೂಲಕ ಹುಡುಕಿ... (Search authors)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full text-xs bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
-        />
+      {/* Search Bar */}
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm mb-6">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ಸಾಹಿತಿಯ ಹೆಸರು ಅಥವಾ ಊರನ್ನು ಹುಡುಕಿ... (Search authors by name or place)"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border-none bg-stone-50/60 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
       </div>
 
       {/* Authors Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          <div className="col-span-full py-16 text-center text-slate-400">
-            ಸಾಹಿತಿಗಳ ಮಾಹಿತಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
-          </div>
-        ) : authors.length === 0 ? (
-          <div className="col-span-full py-16 text-center text-slate-400">
-            ಯಾವುದೇ ಸಾಹಿತಿಗಳು ಸಿಗಲಿಲ್ಲ (No authors found)
-          </div>
-        ) : (
-          authors.map((author) => (
-            <div
-              key={author.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  {author.photo_url ? (
-                    <img
-                      src={author.photo_url}
-                      alt={author.name_kn}
-                      className="w-16 h-16 rounded-2xl object-cover ring-2 ring-gold-500/20 shadow-md"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-primary-600 text-white font-kannada text-2xl font-bold flex items-center justify-center shadow-md">
-                      {author.name_kn?.charAt(0) || 'ಸಾ'}
+      {isLoading ? (
+        <div className="py-20 text-center text-slate-400 font-kannada text-xs">
+          ಸಾಹಿತಿಗಳ ಪಟ್ಟಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...
+        </div>
+      ) : authors.length === 0 ? (
+        <div className="py-16 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 text-center">
+          <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <h3 className="font-kannada font-bold text-sm text-slate-800 dark:text-slate-200">
+            ಯಾವುದೇ ಸಾಹಿತಿಗಳು ಕಂಡುಬಂದಿಲ್ಲ
+          </h3>
+          <p className="font-kannada text-xs text-slate-400 mt-1">
+            ಹುಡುಕಾಟದ ಪದವನ್ನು ಬದಲಾಯಿಸಿ.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {authors.map((author) => {
+            const authorStoryCount = stories.filter(
+              (s) => s.author_id === author.id || s.author?.id === author.id
+            ).length;
+
+            return (
+              <div
+                key={author.id}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200/80 dark:border-slate-800 p-5 flex flex-col justify-between hover:shadow-xs transition-shadow"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      {author.photo_url ? (
+                        <img
+                          src={author.photo_url}
+                          alt={author.name_kn}
+                          className="w-11 h-11 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-xl bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-amber-400 font-kannada font-bold text-sm flex items-center justify-center">
+                          {author.name_kn?.charAt(0) || 'ಸಾ'}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-kannada font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                          {author.name_kn}
+                        </h3>
+                        {author.name_en && (
+                          <span className="text-[11px] text-slate-400 block mt-0.5">
+                            {author.name_en}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(author)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-                      title="ತಿದ್ದಿ (Edit)"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(author)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                        title="ಅಳಿಸಿ (Soft delete)"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    {canEdit && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEditModal(author)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                          title="ತಿದ್ದಿ (Edit)"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(author)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600"
+                            title="ಅಳಿಸಿ (Delete)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
 
-                <h3 className="font-kannada font-bold text-lg text-slate-900 dark:text-white leading-tight">
-                  {author.name_kn}
-                </h3>
-                {author.name_en && (
-                  <p className="text-xs text-slate-400 mt-0.5">{author.name_en}</p>
-                )}
-
-                <div className="flex flex-col gap-1.5 mt-3 text-xs text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>
-                      {author.birth_year ? `${author.birth_year} - ${author.death_year || 'ಇಂದಿನವರೆಗೆ'}` : 'ಕಾಲಾವಧಿ ಅಲಭ್ಯ'}
-                    </span>
+                  {/* Metadata */}
+                  <div className="flex flex-col gap-1 text-[11px] text-slate-500 dark:text-slate-400 mb-3 font-kannada">
+                    {(author.birth_year || author.death_year) && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          {author.birth_year ? `${author.birth_year}` : ''}
+                          {author.death_year ? ` - ${author.death_year}` : ' - ಪ್ರಸ್ತುತ'}
+                        </span>
+                      </div>
+                    )}
+                    {author.place && (
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{author.place}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{author.place || 'ಕರ್ನಾಟಕ'}</span>
-                  </div>
+                  {/* Bio */}
+                  {author.bio && (
+                    <p className="font-kannada text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed mb-4">
+                      {author.bio}
+                    </p>
+                  )}
                 </div>
 
-                {author.bio && (
-                  <p className="font-kannada text-xs text-slate-600 dark:text-slate-300 mt-3 line-clamp-3 leading-relaxed">
-                    {author.bio}
-                  </p>
-                )}
+                {/* Footer link to author's stories */}
+                <div className="pt-3 border-t border-stone-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400">
+                    {authorStoryCount} ಕೃತಿಗಳು
+                  </span>
+                  <Link
+                    to={`/stories?author_id=${author.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-amber-400 hover:underline"
+                  >
+                    <span>ಕೃತಿಗಳನ್ನು ಓದಿ &rarr;</span>
+                  </Link>
+                </div>
               </div>
-
-              {/* Card Footer */}
-              <div className="p-4 bg-stone-50/70 dark:bg-slate-800/40 border-t border-stone-100 dark:border-slate-800 flex items-center justify-between">
-                <Link
-                  to={`/stories?author_id=${author.id}`}
-                  className="font-kannada text-xs font-semibold text-primary-600 dark:text-gold-400 hover:underline inline-flex items-center gap-1"
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>ಕೃತಿಗಳನ್ನು ವೀಕ್ಷಿಸಿ</span>
-                </Link>
-
-                <span className="text-[11px] text-slate-400">ID: #{author.id}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add / Edit Author Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingAuthor ? 'ಸಾಹಿತಿ ವಿವರ ನವೀಕರಣ (Edit Author)' : 'ಹೊಸ ಸಾಹಿತಿ ಸೇರ್ಪಡೆ (Add Author)'}
+        title={editingAuthor ? 'ಸಾಹಿತಿ ವಿವರ ತಿದ್ದಿ (Edit Author)' : 'ಹೊಸ ಸಾಹಿತಿ ಸೇರಿಸಿ (Add Author)'}
+        maxWidth="max-w-md"
       >
         <form onSubmit={handleSaveAuthor} className="flex flex-col gap-4">
           {modalError && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-xs text-rose-600">
-              {modalError}
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+              <span>{modalError}</span>
             </div>
           )}
 
-          <Input
-            label="ಕನ್ನಡ ಹೆಸರು (Name in Kannada)"
-            id="author-name-kn"
-            placeholder="ಉದಾ: ಕುವೆಂಪು, ಕೆ.ಪಿ. ಪೂರ್ಣಚಂದ್ರ ತೇಜಸ್ವಿ..."
+          <KannadaInput
+            label="ಕನ್ನಡ ಹೆಸರು (Kannada Name)"
+            id="nameKn"
             value={nameKn}
-            onChange={(e) => setNameKn(e.target.value)}
+            onChange={setNameKn}
+            placeholder="ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ka -> ಕ, kuvempu -> ಕುವೆಂಪು)..."
             required
           />
 
           <Input
-            label="ಇಂಗ್ಲಿಷ್ ಹೆಸರು (English Name)"
-            id="author-name-en"
-            placeholder="e.g. Kuvempu, K. P. Poornachandra Tejaswi..."
+            label="English Name (Optional)"
+            id="nameEn"
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
+            placeholder="e.g. Kuvempu, Tejaswi..."
           />
 
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="ಜನನ ವರ್ಷ (Birth Year)"
-              id="author-birth"
+              id="birthYear"
               type="number"
-              placeholder="1904"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
+              placeholder="1904"
             />
-
             <Input
               label="ನಿಧನ ವರ್ಷ (Death Year)"
-              id="author-death"
+              id="deathYear"
               type="number"
-              placeholder="1994"
               value={deathYear}
               onChange={(e) => setDeathYear(e.target.value)}
+              placeholder="1994 (ಖಾಲಿ ಬಿಡಿ)"
             />
           </div>
 
-          <Input
-            label="ಹುಟ್ಟೂರು / ಸ್ಥಳ (Place / Region)"
-            id="author-place"
-            placeholder="ಉದಾ: ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ"
+          <KannadaInput
+            label="ಸ್ಥಳ / ಊರು (Place)"
+            id="place"
             value={place}
-            onChange={(e) => setPlace(e.target.value)}
+            onChange={setPlace}
+            placeholder="ಉದಾ: kuppalli, shivamogga -> ಕುಪ್ಪಳ್ಳಿ, ಶಿವಮೊಗ್ಗ..."
           />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-              ಸಾಹಿತ್ಯಿಕ ಪರಿಚಯ (Biography / Literary Background)
-            </label>
-            <textarea
-              rows={3}
-              placeholder="ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯ ಸೇವೆ, ಪ್ರಮುಖ ಕೃತಿಗಳು, ಜ್ಞಾನಪೀಠ ಪ್ರಶಸ್ತಿ ಇತ್ಯಾದಿ ವಿವರ..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              className="w-full p-2.5 rounded-xl text-xs bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 outline-none font-kannada"
-            />
-          </div>
+          <KannadaInput
+            label="ಕಿರು ಪರಿಚಯ (Biography)"
+            id="bio"
+            value={bio}
+            onChange={setBio}
+            multiline
+            rows={3}
+            placeholder="ಸಾಹಿತಿಯ ಸಾಹಿತ್ಯಿಕ ಕೊಡುಗೆ ಮತ್ತು ಕಿರು ಪರಿಚಯ..."
+          />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-              ಭಾವಚಿತ್ರ (Author Photo, max 2MB)
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setPhotoFile(e.target.files[0] || null)}
-              className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-600 hover:file:bg-primary-100"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 mt-2">
-            <Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>
-              ರದ್ದು (Cancel)
+          <div className="flex justify-end gap-2 pt-3 border-t border-stone-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setModalOpen(false)}
+            >
+              ರದ್ದುಮಾಡಿ (Cancel)
             </Button>
             <Button
               type="submit"
-              variant="primary"
               size="sm"
               isLoading={isSubmitting}
               className="bg-primary-600 hover:bg-primary-700 text-white font-kannada"
             >
-              {isSubmitting ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ಸಾಹಿತಿ ಸೇರಿಸಿ (Save Author)'}
+              ಉಳಿಸಿ (Save)
             </Button>
           </div>
         </form>
