@@ -22,6 +22,19 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Token Refresh Queue Mutex
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
 // Response Interceptor: Token Expiration & Error Handling
 apiClient.interceptors.response.use(
   (response) => response,
@@ -30,30 +43,55 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized (Expired or Invalid Token)
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refresh_token');
 
-      if (refreshToken) {
-        try {
-          const res = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
-          const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
-
-          if (newAccessToken) {
-            localStorage.setItem('auth_token', newAccessToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return apiClient(originalRequest);
-          }
-        } catch {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('auth_user');
-          window.dispatchEvent(new CustomEvent('auth:expired'));
-        }
-      } else {
+      if (!refreshToken) {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_user');
         window.dispatchEvent(new CustomEvent('auth:expired'));
+        return Promise.reject(error);
+      }
+
+      // If another request is already refreshing, wait for it
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          subscribeTokenRefresh((newToken) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        const res = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
+        const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
+        const newRefreshToken = res.data?.data?.refreshToken || res.data?.refreshToken;
+
+        if (newAccessToken) {
+          localStorage.setItem('auth_token', newAccessToken);
+          if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+          }
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          onRefreshed(newAccessToken);
+          return apiClient(originalRequest);
+        }
+      } catch (refreshErr) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('auth_user');
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
       }
     }
 
@@ -115,7 +153,6 @@ export const storiesApi = {
       });
       if (maybeFile) {
         formData.append('file', maybeFile);
-        formData.append('pdf', maybeFile);
       }
       return apiClient.post('/stories', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -140,7 +177,6 @@ export const storiesApi = {
       });
       if (maybeFile) {
         formData.append('file', maybeFile);
-        formData.append('pdf', maybeFile);
       }
       return apiClient.patch(`/stories/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -151,7 +187,6 @@ export const storiesApi = {
   replacePdf: (id, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('pdf', file);
     return apiClient.put(`/stories/${id}/pdf`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });

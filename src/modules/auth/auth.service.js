@@ -70,8 +70,25 @@ export async function rotateRefreshToken(rawRefreshToken) {
     throw new AppError('INVALID_TOKEN', 'Invalid refresh token', 401);
   }
 
-  // Reuse detection: if already revoked, reject!
+  // Reuse detection: if already revoked, allow 30s grace period for concurrent requests
   if (tokenRecord.revoked_at) {
+    const revokedTime = new Date(tokenRecord.revoked_at).getTime();
+    if (Date.now() - revokedTime < 30000) {
+      const user = await db('users').where({ id: tokenRecord.user_id }).first();
+      if (user && user.is_active) {
+        const accessToken = jwt.sign(
+          { sub: user.id, email: user.email, role: user.role, name: user.name },
+          process.env.JWT_ACCESS_SECRET,
+          { expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m' }
+        );
+        return {
+          accessToken,
+          refreshToken: rawRefreshToken,
+          user: { id: user.id, name: user.name, email: user.email, role: user.role }
+        };
+      }
+    }
+
     // Revoke all tokens for this user as a security precaution
     await db('refresh_tokens').where({ user_id: tokenRecord.user_id }).update({
       revoked_at: db.fn.now()

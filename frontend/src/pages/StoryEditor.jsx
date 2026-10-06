@@ -246,7 +246,6 @@ export default function StoryEditor() {
 
         if (pdfFile) {
           formData.append('file', pdfFile);
-          formData.append('pdf', pdfFile);
         }
 
         if (validRefs.length > 0) {

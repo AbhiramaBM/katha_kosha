@@ -62,12 +62,18 @@ export const uploadStoryPdf = (req, res, next) => {
   bookMulter(req, res, (err) => {
     if (err) return next(err);
     if (req.files) {
-      // Ensure single file upload only
-      const fileList = (req.files.file || []).concat(req.files.pdf || []);
-      if (fileList.length > 1) {
-        return next(new AppError('VALIDATION_ERROR', 'Only a single book file upload is allowed', 400));
+      const fileCount = (req.files.file?.length || 0) + (req.files.pdf?.length || 0);
+      if (fileCount > 1) {
+        const f1 = req.files.file?.[0];
+        const f2 = req.files.pdf?.[0];
+        if (fileCount === 2 && f1 && f2 && (f1.originalname === f2.originalname && f1.size === f2.size)) {
+          req.file = f1;
+        } else {
+          return next(new AppError('VALIDATION_ERROR', 'Only a single book file upload is allowed', 400));
+        }
+      } else {
+        req.file = req.files.file?.[0] || req.files.pdf?.[0] || null;
       }
-      req.file = fileList[0] || null;
     }
     next();
   });
