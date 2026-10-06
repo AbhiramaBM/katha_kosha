@@ -4,9 +4,8 @@ const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 export const apiClient = axios.create({
   baseURL,
-  timeout: 15000,
+  timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
@@ -64,7 +63,9 @@ apiClient.interceptors.response.use(
       error.message ||
       'An unexpected network error occurred.';
 
-    return Promise.reject(new Error(message));
+    const errObj = new Error(message);
+    errObj.response = error.response;
+    return Promise.reject(errObj);
   }
 );
 
@@ -97,8 +98,13 @@ export const authorsApi = {
 export const storiesApi = {
   list: (params = {}) => apiClient.get('/stories', { params }),
   getById: (id) => apiClient.get(`/stories/${id}`),
-  create: (storyData, pdfFile = null) => {
-    if (storyData.content_type === 'pdf' || pdfFile) {
+  create: (storyData, maybeFile = null) => {
+    if (storyData instanceof FormData) {
+      return apiClient.post('/stories', storyData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    if (storyData.content_type === 'pdf' || maybeFile) {
       const formData = new FormData();
       Object.keys(storyData).forEach((key) => {
         if (key === 'references' && Array.isArray(storyData[key])) {
@@ -107,8 +113,9 @@ export const storiesApi = {
           formData.append(key, storyData[key]);
         }
       });
-      if (pdfFile) {
-        formData.append('pdf', pdfFile);
+      if (maybeFile) {
+        formData.append('file', maybeFile);
+        formData.append('pdf', maybeFile);
       }
       return apiClient.post('/stories', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -116,8 +123,13 @@ export const storiesApi = {
     }
     return apiClient.post('/stories', storyData);
   },
-  update: (id, storyData, pdfFile = null) => {
-    if (pdfFile) {
+  update: (id, storyData, maybeFile = null) => {
+    if (storyData instanceof FormData) {
+      return apiClient.patch(`/stories/${id}`, storyData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    if (maybeFile || storyData.content_type === 'pdf') {
       const formData = new FormData();
       Object.keys(storyData).forEach((key) => {
         if (key === 'references' && Array.isArray(storyData[key])) {
@@ -126,7 +138,10 @@ export const storiesApi = {
           formData.append(key, storyData[key]);
         }
       });
-      formData.append('pdf', pdfFile);
+      if (maybeFile) {
+        formData.append('file', maybeFile);
+        formData.append('pdf', maybeFile);
+      }
       return apiClient.patch(`/stories/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -135,6 +150,7 @@ export const storiesApi = {
   },
   replacePdf: (id, file) => {
     const formData = new FormData();
+    formData.append('file', file);
     formData.append('pdf', file);
     return apiClient.put(`/stories/${id}/pdf`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }

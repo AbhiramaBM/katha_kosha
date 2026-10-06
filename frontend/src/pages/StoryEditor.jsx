@@ -210,42 +210,64 @@ export default function StoryEditor() {
 
     setIsSaving(true);
     try {
-      const formData = new FormData();
-      formData.append('author_id', authorId);
-      formData.append('title_kn', titleKn.trim());
-      if (titleEn.trim()) formData.append('title_en', titleEn.trim());
-      if (genre.trim()) formData.append('genre', genre.trim());
-      if (publishedYear) formData.append('published_year', publishedYear);
-      if (summary.trim()) formData.append('summary', summary.trim());
-      formData.append('content_type', contentType);
-      formData.append('status', status);
+      const validRefs = references.filter(r => r.name?.trim() && r.url?.trim());
 
       if (contentType === 'text') {
-        formData.append('content_text', contentText.trim());
-      } else if (pdfFile) {
-        formData.append('file', pdfFile);
-        formData.append('pdf', pdfFile);
-      }
+        const payload = {
+          author_id: Number(authorId),
+          title_kn: titleKn.trim(),
+          title_en: titleEn.trim() || null,
+          genre: genre.trim() || null,
+          published_year: publishedYear ? Number(publishedYear) : null,
+          summary: summary.trim() || null,
+          content_type: 'text',
+          content_text: contentText.trim(),
+          status,
+          references: validRefs
+        };
 
-      // Filter valid references
-      const validRefs = references.filter(r => r.name?.trim() && r.url?.trim());
-      if (validRefs.length > 0) {
-        formData.append('references', JSON.stringify(validRefs));
-      }
-
-      if (isEditing) {
-        await storiesApi.update(id, formData);
-        toast.success('ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ');
+        if (isEditing) {
+          await storiesApi.update(id, payload);
+          toast.success(lang === 'kn' ? 'ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ' : 'Story updated successfully');
+        } else {
+          await storiesApi.create(payload);
+          toast.success(lang === 'kn' ? 'ಹೊಸ ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ' : 'Story created successfully');
+        }
       } else {
-        await storiesApi.create(formData);
-        toast.success('ಹೊಸ ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ');
+        const formData = new FormData();
+        formData.append('author_id', String(authorId));
+        formData.append('title_kn', titleKn.trim());
+        if (titleEn.trim()) formData.append('title_en', titleEn.trim());
+        if (genre.trim()) formData.append('genre', genre.trim());
+        if (publishedYear) formData.append('published_year', String(publishedYear));
+        if (summary.trim()) formData.append('summary', summary.trim());
+        formData.append('content_type', 'pdf');
+        formData.append('status', status);
+
+        if (pdfFile) {
+          formData.append('file', pdfFile);
+          formData.append('pdf', pdfFile);
+        }
+
+        if (validRefs.length > 0) {
+          formData.append('references', JSON.stringify(validRefs));
+        }
+
+        if (isEditing) {
+          await storiesApi.update(id, formData);
+          toast.success(lang === 'kn' ? 'ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ' : 'Story updated successfully');
+        } else {
+          await storiesApi.create(formData);
+          toast.success(lang === 'kn' ? 'ಹೊಸ ಕೃತಿಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ' : 'Story created successfully');
+        }
       }
 
       navigate('/stories');
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.response?.data?.error?.message || 'ಕೃತಿ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ');
-      toast.error('ಕೃತಿ ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ');
+      const msg = err.response?.data?.error?.message || err.message || (lang === 'kn' ? 'ಕೃತಿ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ' : 'Failed to save story');
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setIsSaving(false);
     }
